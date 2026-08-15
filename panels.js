@@ -117,11 +117,32 @@
 
 
   const PHOTOS = [
-    { src: 'photos/img_4381_720.jpg', text: 'brooklyn, 2am' },
-    { src: 'photos/img_4039_720.jpg', text: 'kitchen sessions' },
-    { src: 'photos/img_1448_720.jpg', text: 'boba run' },
-    { src: 'photos/img_4017_720.jpg', text: 'diner pancakes' },
-    { src: 'photos/img_6152_720.jpg', text: 'graduation' },
+    { src: 'photos/img_0095_720.jpg' },
+    { src: 'photos/img_0520_720.jpg' },
+    { src: 'photos/img_0756_720.jpg' },
+    { src: 'photos/img_0819_original_720.jpg' },
+    { src: 'photos/img_1125_720.jpg' },
+    { src: 'photos/img_1416_720.jpg' },
+    { src: 'photos/img_2016_720.jpg' },
+    { src: 'photos/img_2185_720.jpg' },
+    { src: 'photos/img_2450_720.jpg' },
+    { src: 'photos/img_2734_720.jpg' },
+    { src: 'photos/img_4017_720.jpg' },
+    { src: 'photos/img_4039_720.jpg' },
+    { src: 'photos/img_4104_720.jpg' },
+    { src: 'photos/img_4381_720.jpg' },
+    { src: 'photos/img_4625_720.jpg' },
+    { src: 'photos/img_4734_720.jpg' },
+    { src: 'photos/img_5161_720.jpg' },
+    { src: 'photos/img_5348_720.jpg' },
+    { src: 'photos/img_5436_720.jpg' },
+    { src: 'photos/img_5508_720.jpg' },
+    { src: 'photos/img_5801_720.jpg' },
+    { src: 'photos/img_5876_720.jpg' },
+    { src: 'photos/img_5937_720.jpg' },
+    { src: 'photos/img_6152_720.jpg' },
+    { src: 'photos/img_6216_720.jpg' },
+    { src: 'photos/img_7346_720.jpg' },
   ];
 
   /* ---- section manager ------------------------------------------- */
@@ -613,17 +634,17 @@
   })();
 
   /* ---- warming the strip -----------------------------------------
-     The five photos are the only raster images on the page, and the strip
+     These photos are the only raster images on the page, and the strip
      used to be built inside the click that opens the section: fetching and
-     decoding 1.5MB of JPEG on the first frame of a viewport-sized panel's
+     decoding ~2MB of JPEG on the first frame of a viewport-sized panel's
      travel. The cards arrived grey and filled in behind the slide, and the
      slide hitched while they did — a first open that felt nothing like the
      second. Do it once, early, so the click has nothing left to pay for.
 
      After the loader, because it owns the opening beat of the page and a
-     canvas animation shouldn't be sharing frames with five image decodes;
-     and at idle after that, so this waits behind anything the reader is
-     actually looking at. */
+     canvas animation shouldn't be sharing frames with two dozen image
+     decodes; and at idle after that, so this waits behind anything the
+     reader is actually looking at. */
   function warmCarousel() {
     const go = () => carousel.prepare();
     if (window.requestIdleCallback) requestIdleCallback(go, { timeout: 2500 });
