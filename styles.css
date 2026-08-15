@@ -2,10 +2,38 @@
    Scroll-reveal demo — reboot.studio-style word-by-word reading
    --------------------------------------------------------------- */
 
-@font-face {
-  font-family: 'Autography';
-  src: url('assets/Autography.otf') format('opentype');
-  font-display: swap;
+/* ---- typed custom properties -----------------------------------
+   These three are written from JS on every animation frame: --w per word
+   by paintWave (main.js), --logo-fill by the scroll loop, --sat per card
+   by the carousel. Unregistered custom properties are parsed as untyped
+   token streams *and they inherit*, so each write invalidated the whole
+   subtree and forced the color-mix()/calc() that consumes it to be
+   re-resolved from scratch. Declaring them typed and non-inheriting is
+   what stops a per-frame write from dirtying anything but its own
+   element. */
+@property --w {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+@property --logo-fill {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 0%;
+}
+
+/* inherits: true, unlike the two above — and it matters. --sat is written on
+   .carousel-item but read by .carousel-item img, a child, so the value has to
+   reach it by inheritance. With inherits: false the img fell back to the
+   initial value and every photo rendered permanently grayscale. The other two
+   are written and read on the same element, so they can stay non-inheriting;
+   the subtree under a carousel item is one figure and one img, so inheriting
+   here costs nothing measurable. */
+@property --sat {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
 }
 
 :root {
@@ -182,7 +210,8 @@ html.is-loading .track {
   padding: 8px;
   box-sizing: content-box;
   color: var(--ink-soft);
-  transition: color 400ms ease, filter 400ms ease, transform 720ms cubic-bezier(0.16, 1, 0.3, 1);
+  /* no filter in this list — nothing ever sets a filter on this element */
+  transition: color 400ms ease, transform 720ms cubic-bezier(0.16, 1, 0.3, 1);
   transform-style: preserve-3d;
 }
 
@@ -322,7 +351,14 @@ html.is-loading .track {
   animation: hint-bob 2.2s ease-in-out infinite;
 }
 
-.scroll-hint.is-hidden { opacity: 0; pointer-events: none; }
+/* animation: none, not just opacity: 0 — hint-bob is infinite, so hiding
+   the cue with opacity alone left it ticking a transform on a fixed element
+   for the rest of the session. */
+.scroll-hint.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+  animation: none;
+}
 
 @keyframes hint-bob {
   0%, 100% { transform: translate(-50%, 0); }
@@ -354,13 +390,14 @@ html.is-loading .track {
   font-weight: 500;
   line-height: 1.7;
   letter-spacing: -0.005em;
-  will-change: transform;
   transition: transform 150ms ease-out;
-  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.03);
-}
-
-[data-theme="dark"] .prose {
-  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.12);
+  /* No will-change and no text-shadow here on purpose. paintWave rewrites
+     --w (and therefore `color`) on dozens of the ~163 descendant words every
+     frame, so promoting this element pinned a layer that then had to be
+     fully re-rastered every frame anyway — the memory cost of a layer with
+     none of the benefit. The text-shadow was a 0-blur 3% emboss that added a
+     shadow pass per glyph to every one of those repaints. The tilt this
+     transition serves is ±1deg, which needs neither. */
 }
 
 /* Every word is a span, inked by the read-head sweep in main.js:
@@ -508,6 +545,17 @@ html.is-loading .track {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   color: transparent;
+}
+
+/* The gradient above stays on every word so one can't flash to solid ink
+   part-way through rotating out. Only the animation is scoped, and only to
+   the two words that can actually be seen: the one on screen and the one
+   travelling off it. Animating background-position on a 250%-wide gradient
+   clipped to glyphs regenerates the gradient and re-rasterizes the text
+   mask every frame, and three of the five spans are fully transparent at
+   any moment — that work was invisible by definition. */
+.roller.is-active .roller-word.is-visible,
+.roller.is-active .roller-word.is-out {
   animation: roller-shimmer 3.85s linear infinite;
 }
 
@@ -529,7 +577,6 @@ html.is-loading .track {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  animation: roller-shimmer 3.85s linear infinite;
 }
 
 /* -- wave: a hand that waves when activated -- */
@@ -932,11 +979,14 @@ html.is-loading .track {
   animation: camera-flash 3s ease-in-out infinite;
 }
 
+/* No `filter: none` in here. It was visually a no-op, but naming filter in
+   a keyframe makes it an animated property for the whole 3s infinite cycle,
+   which promotes the element and drops subpixel antialiasing on it. */
 @keyframes camera-flash {
-  0%, 100% { opacity: 1; transform: scale(1); filter: none; }
-  15%      { opacity: 1; transform: scale(1.05); filter: none; }
-  18%      { opacity: 0.3; filter: none; }
-  22%      { opacity: 1; transform: scale(1); filter: none; }
+  0%, 100% { opacity: 1; transform: scale(1); }
+  15%      { opacity: 1; transform: scale(1.05); }
+  18%      { opacity: 0.3; }
+  22%      { opacity: 1; transform: scale(1); }
 }
 
 [data-theme="dark"] .word-link.is-active .token-camera svg,
@@ -1200,8 +1250,12 @@ html.is-loading .track {
      (furthest tile edge lands near 251px, so this leaves headroom) */
   width: 661px;
   height: 661px;
-  perspective: 820px;
-  transform-style: preserve-3d;
+  /* No perspective / preserve-3d. sphere.js writes translate3d(x, y, 0) —
+     z is always zero, and the depth read is faked in JS by scaling each
+     tile (see place()). So the 3D rendering context changed nothing
+     visually, while disabling flattening for ~156 SVG nodes and making the
+     compositor depth-sort nine layers a frame against the z-index that the
+     same loop was already writing. */
   pointer-events: auto;
   cursor: grab;
   touch-action: none;
@@ -1658,16 +1712,21 @@ html.is-loading .track {
   pointer-events: none;
   transform-origin: top right;
   transform: scale(0.96) translateY(-8px);
-  transition: opacity 350ms ease, transform 400ms cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 400ms ease;
-  box-shadow: none;
+  transition: opacity 350ms ease, transform 400ms cubic-bezier(0.16, 1, 0.3, 1);
+  /* Shadow is static and carried in by the panel's own opacity fade, rather
+     than being transitioned from `none` on open. A transitioned box-shadow
+     changes the element's paint output every frame, so its layer can't be
+     cached — which cancels the transform optimisation for the scale running
+     alongside it, on a full-viewport-height element with a 40px blur.
+     Opacity fades the shadow along with everything else, so this is the same
+     picture for 50ms less, entirely on the compositor. */
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.08), 0 2px 12px rgba(0, 0, 0, 0.04);
 }
 
 .resume-panel.is-open {
   opacity: 1;
   pointer-events: auto;
   transform: scale(1) translateY(0);
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.08), 0 2px 12px rgba(0, 0, 0, 0.04);
 }
 
 .resume-topbar {
@@ -1837,12 +1896,9 @@ html.is-loading .track {
   color: var(--ink);
 }
 
+/* static, same reasoning as the light-theme shadow above */
 [data-theme="dark"] .resume-panel {
   border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: none;
-}
-
-[data-theme="dark"] .resume-panel.is-open {
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4), 0 2px 12px rgba(0, 0, 0, 0.2);
 }
 
@@ -2516,7 +2572,10 @@ html.is-sectioned .nav {
   .token-wave.is-active,
   .token-bars.is-active span,
   .token-box.is-active,
-  .token-crane.is-active svg,
+  /* .token-bridge, not .token-crane — the token is authored as <crane> but
+     main.js builds it with class token-bridge, so this rule was never
+     matching and the bridge kept drawing itself under reduced motion. */
+  .token-bridge.is-active svg,
   .roller.is-active .roller-word,
   .now-playing-bars span {
     animation: none;
@@ -2579,4 +2638,463 @@ html.is-sectioned .nav {
   /* the carousel only moves while the reader is dragging or scrolling it,
      so it stays — but the label doesn't need to fade with focus */
   .carousel-hint { transition: none; }
+}
+
+/* ================================================================
+   perf-low — measured slow hardware
+   ----------------------------------------------------------------
+   Set by the capability probe in loader.js: the intro is two seconds of
+   continuous canvas animation, so its median frame time is a fair read on
+   whether this machine can hold 60fps.
+
+   The rule for everything in this block: the choreography does not change.
+   No duration, easing, delay or stagger is touched, and nothing starts or
+   stops moving. What changes is only how expensively the same picture is
+   drawn — blur radii, shadow spread, and animation of detail far too small
+   to read. On the hardware this targets, the difference between these and
+   the defaults is invisible; the difference in frame time is not.
+
+   Kept separate from prefers-reduced-motion on purpose. That is a stated
+   preference about motion and it legitimately removes movement; this is a
+   measurement about throughput and must not.
+   ================================================================ */
+
+/* A real-time blur on eight tiles whose transforms are being rewritten
+   every frame is the single most expensive moment on the page. Greyscale
+   plus opacity reads as the same recede — it is already the substitute the
+   reduced-motion path uses. */
+html.perf-low .sphere.is-focusing .sphere-item:not(.is-focused),
+html.perf-low .sphere.is-card .sphere-item:not(.is-flying) {
+  filter: grayscale(1) opacity(0.3);
+}
+
+/* The tiles carry ~40 elements animating paint properties (fill,
+   stroke-dashoffset, opacity) inside filtered subtrees — keyboard keys
+   depressing, tower lights twinkling, signals travelling. At tile scale
+   these are a few pixels each. Holding them still costs nothing you can
+   see and takes a continuous repaint of nine filtered subtrees off the
+   frame budget. */
+html.perf-low .sphere-item * {
+  animation-play-state: paused;
+}
+
+/* 60px of shadow blur around five cards that are transform-written every
+   frame is a large paint area; 24px is the same lift at a third of it. */
+html.perf-low .carousel-figure {
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.16);
+}
+
+html[data-theme="dark"].perf-low .carousel-figure {
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* width and margin are layout properties, so each token activation reflows
+   the whole 163-word paragraph for 600ms — and it happens during scroll,
+   when paintWave is already busiest. Snapping is a smaller loss than a
+   stuttering read. */
+html.perf-low .token {
+  transition: opacity 450ms ease,
+    transform 500ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html.perf-low .roller {
+  transition: none;
+}
+
+/* ±1deg of cursor tilt on the largest text block on the page. main.js skips
+   the work when this is set; this is belt and braces. */
+html.perf-low .prose {
+  transform: none !important;
+  transition: none;
+}
+
+/* ================================================================
+   Touch and narrow viewports
+   ----------------------------------------------------------------
+   Additive and guarded: with none of these queries matching, the desktop
+   rendering above is untouched.
+
+   Three axes rather than a ladder of widths, because they answer different
+   questions. 1500px is where the globe already disappears, so it is also
+   where its replacement has to appear. 720px is the existing panel
+   breakpoint and does duty as "phone layout". Hover capability is asked
+   separately from width, because a 1300px touchscreen and a 700px window
+   with a mouse want opposite answers and no width can express that.
+   ================================================================ */
+
+/* ---- hover is not a thing every pointer has --------------------
+   Roughly thirty :hover rules in this stylesheet were firing on touch as
+   sticky states that only cleared when you tapped something else. The ones
+   that matter are collected here; the rest are cosmetic. */
+@media (hover: none) {
+  /* The track name was hover-only, so on a phone there was no way at all to
+     see what was playing. It becomes tap-to-toggle instead (the class is set
+     in spotify.js), and the transition goes away with it — animating
+     max-width and padding is the one hover on this page that also reflowed
+     the fixed nav row. */
+  .np-expand { transition: none; }
+
+  .now-playing.is-expanded .np-expand {
+    max-width: min(220px, 46vw);
+    opacity: 1;
+    padding-right: 12px;
+  }
+
+  /* the only cue that a row is tappable */
+  .blog-card-arrow,
+  .proj-arrow {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* no cursor to lift toward, and these read as stuck-on when they latch */
+  .nav-icon:hover,
+  .nav-chip:hover,
+  .theme-toggle:hover { background: transparent; }
+}
+
+/* Tap handling. touch-action: manipulation drops the ~300ms wait for a
+   possible double-tap-to-zoom on every control, which is felt as general
+   sluggishness rather than as a delay on any one tap. */
+@media (pointer: coarse) {
+  .nav-chip,
+  .nav-icon,
+  .theme-toggle,
+  .end-action,
+  .fs-up,
+  .blog-back,
+  .blog-card,
+  .proj-row,
+  .resume-close,
+  .resume-download,
+  .desk-back {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+}
+
+/* Hidden by default, revealed by the queries below. Both of these have to be
+   declared before those queries, not after: same specificity means source
+   order decides, and a `display: none` written afterwards wins everywhere. */
+.nav-chip--projects { display: none; }
+
+.footer-social {
+  display: none;
+  align-items: center;
+  gap: 4px;
+  pointer-events: auto;
+}
+
+.footer-social .nav-icon { width: 30px; height: 30px; }
+.footer-social .nav-icon svg { width: 16px; height: 16px; }
+
+/* ---- the work panel replaces the globe below 1500px ------------
+   Between 720px and 1500px there was previously neither a globe nor any
+   mobile treatment — this closes that gap with the same rule that opens it
+   on phones. */
+@media (max-width: 1500px) {
+  .nav-chip--projects { display: inline-flex; }
+}
+
+.proj-list-inner {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.proj-row {
+  display: grid;
+  grid-template-columns: 74px 1fr;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  padding: 20px 4px;
+  border: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  color: var(--ink);
+  font: inherit;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 420ms ease, transform 420ms cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 200ms ease;
+  transition-delay: calc(220ms + var(--i, 0) * 55ms);
+}
+
+.fs-panel.is-open .proj-row {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+[data-theme="dark"] .proj-row { border-bottom-color: rgba(255, 255, 255, 0.1); }
+
+.proj-art {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 58px;
+}
+
+.proj-art svg {
+  width: 100%;
+  height: 100%;
+  color: var(--ink);
+}
+
+.proj-body { display: flex; flex-direction: column; gap: 4px; }
+
+.proj-name {
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.proj-arrow {
+  display: inline-block;
+  margin-left: 8px;
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 260ms ease, transform 260ms ease;
+}
+
+.proj-row:hover .proj-arrow { opacity: 1; transform: translateX(0); }
+
+.proj-date {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.proj-detail-art {
+  height: 120px;
+  margin: 0 0 26px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.proj-detail-art svg { height: 100%; color: var(--ink); }
+
+.proj-link {
+  display: inline-block;
+  margin-top: 28px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 2px;
+}
+
+/* ---- phone layout --------------------------------------------- */
+@media (max-width: 720px) {
+  /* dvh, not vh: on iOS the URL bar makes vh taller than what you can see,
+     so a 100vh column has its last line permanently under the chrome. */
+  .track { height: 100svh; }
+
+  .viewport { padding: 96px 20px 72px; align-items: flex-start; }
+
+  /* 100%, not none: .prose is a flex item, and a flex item's default
+     min-width:auto stops it shrinking below its content, so an unbounded
+     max-width let the lines run off the right edge instead of wrapping. */
+  .prose {
+    font-size: 17px;
+    line-height: 1.65;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  /* Six controls in a space-between row do not fit 390px. The social links
+     move to the footer, which has room and is where they read as a sign-off
+     rather than competing with the two things you actually do here. */
+  .nav {
+    padding: calc(14px + env(safe-area-inset-top)) 18px 14px;
+  }
+
+  .nav-logo { font-size: 18px; }
+
+  .nav-right > .nav-icon { display: none; }
+
+  .nav-chip { font-size: 11px; padding: 7px 12px; height: 31px; }
+
+  /* Some touch browsers still resolve :hover on tap, which would open the
+     track name to its full 220px and push the nav off a 390px screen. Cap it
+     regardless of which rule wins. */
+  .now-playing:hover .np-expand,
+  .now-playing.is-expanded .np-expand { max-width: 42vw; }
+
+  .footer {
+    padding: 14px 18px calc(14px + env(safe-area-inset-bottom));
+    gap: 12px;
+  }
+
+  /* the social links, rehoused out of the nav */
+  .footer-social { display: flex; }
+  .footer-copyright { display: none; }
+
+  .scroll-hint {
+    bottom: calc(56px + env(safe-area-inset-bottom));
+    font-size: 14px;
+  }
+
+  .end-actions {
+    bottom: calc(54px + env(safe-area-inset-bottom));
+    left: 20px;
+    right: 20px;
+    transform: none !important;
+    align-items: stretch;
+  }
+
+  .end-action { justify-content: center; }
+
+  .proj-row { grid-template-columns: 56px 1fr; gap: 14px; padding: 17px 2px; }
+  .proj-art { height: 46px; }
+  .proj-name { font-size: 17px; }
+  .proj-detail-art { height: 92px; }
+
+  /* ---- resume: was a 195px-wide two-column card at 9px type ----
+     min(50vw, 640px) resolves to about 195px on a 390px screen, and the
+     content inside is a nested two-column grid with overflow:hidden at
+     three levels, because on desktop it is designed to fit one screen with
+     no scrolling. None of that survives a phone: it goes full-screen, one
+     column, and scrolls. */
+  .resume-panel {
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    width: auto;
+    height: auto;
+    border-radius: 0;
+    border: none;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    transform-origin: center;
+  }
+
+  /* The panel becomes the scroll container; everything inside it stops
+     being height-constrained. On desktop .resume-sections is `flex: 1` with
+     overflow:hidden inside a fixed-height column — the layout is tuned to
+     fit one screen exactly. Just switching it to one column and
+     overflow:visible isn't enough: it keeps the bounded flex height, so the
+     content spills out and draws on top of the sections below it. It has to
+     stop flexing and be allowed to grow. */
+  .resume-content {
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 20px 24px;
+  }
+
+  /* plain blocks rather than a grid — the grid-column spans and row sizing
+     have nothing to do once there's a single column, and block flow can't
+     collapse two entries into the same cell */
+  .resume-sections,
+  .resume-section,
+  .resume-section--exp {
+    display: block;
+    flex: 0 0 auto;
+    min-height: auto;
+    overflow: visible;
+  }
+
+  .resume-section { margin-bottom: 22px; }
+  .resume-section:last-child { margin-bottom: 0; }
+  .resume-entry { margin-bottom: 14px; }
+
+  /* 9-9.5px is below legible on a desktop monitor, let alone in a hand */
+  .resume-header h1 { font-size: 21px; }
+  .resume-contact { font-size: 12px; }
+  .resume-section h2 { font-size: 11px; }
+  .resume-entry-head { font-size: 14px; }
+  .resume-entry-head span { font-size: 12px; }
+  .resume-entry-sub { font-size: 12px; }
+  .resume-entry p { font-size: 13px; line-height: 1.55; }
+  .resume-entry ul { font-size: 13px; line-height: 1.55; }
+
+  /* company/title on the left and date/location on the right collide well
+     before 390px, and the date is nowrap so it wins and pushes the title
+     out. Stack them instead. */
+  .resume-entry-head,
+  .resume-entry-sub {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .resume-entry-head span,
+  .resume-entry-sub span { white-space: normal; }
+
+  .blog-article-meta + p::first-letter { font-size: 34px; }
+}
+
+/* ---- touch hardening -------------------------------------------
+   The page replaces native scrolling with a virtual one, so the browser's
+   own overscroll gestures have nothing useful to do and actively fight it:
+   pull-to-refresh fires on a downward swipe at the top of the story, and
+   rubber-banding moves a page that is not supposed to move. */
+html, body {
+  overscroll-behavior: none;
+}
+
+.track {
+  touch-action: none;
+}
+
+/* ---- project detail: the journal flourishes don't belong here ----
+   #projectDetail reuses .blog-article so it inherits the slide-in, the
+   native scrolling and the back control. What it should not inherit is the
+   typography that makes a rambling look like a journal entry: the centred
+   title and date with a rule under them, and the drop cap anchored to the
+   paragraph after .blog-article-meta — which here is the project
+   description, so every project opened with one enormous letter. */
+#projectDetail h1 {
+  text-align: left;
+  font-size: 28px;
+}
+
+#projectDetail .blog-article-meta {
+  text-align: left;
+  margin-bottom: 24px;
+  padding-bottom: 0;
+}
+
+#projectDetail .blog-article-meta::after { content: none; }
+
+#projectDetail .blog-article-meta + p::first-letter {
+  float: none;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  margin: 0;
+}
+
+#projectDetail .blog-tags {
+  margin-top: 22px;
+  font-size: 11px;
+}
+
+[data-theme="dark"] #projectDetail .blog-tags { color: rgba(255, 255, 255, 0.45); }
+
+/* bullets separated by newlines in projects.js, as on the globe's card */
+#projectDetail .proj-desc {
+  white-space: pre-line;
+}
+
+/* ---- scroll chaining on the panel scrollers ---------------------
+   html/body carry overscroll-behavior: none so the browser's own
+   pull-to-refresh and rubber-band can't fight the virtual scroll. These are
+   the three regions that genuinely do scroll natively, and without `contain`
+   reaching the end of one chains the gesture up to the document and re-arms
+   exactly what that rule is suppressing. .desk-card-desc already does this
+   (see the project card above); these are the rest. */
+.fs-scroll,
+.blog-article,
+.resume-content {
+  overscroll-behavior: contain;
 }
