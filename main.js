@@ -56,24 +56,38 @@ const TOKEN_BUILDERS = {
     });
     let active = 0;
     let started = false;
-    function setWidth() {
-      const items = el.querySelectorAll(".roller-word");
-      const visible = items[active];
-      el.style.width = visible.scrollWidth + "px";
+
+    /* Every word's width is measured once, up front, and then only ever read
+       out of this array. setWidth() used to read scrollWidth and write
+       style.width back to back — a forced synchronous layout — and it was
+       called from a 2.2s interval that runs for the entire session, so the
+       page paid a layout flush plus a 400ms width reflow of the whole
+       163-word paragraph every 2.2 seconds forever. The widths cannot change
+       after build: the five strings are fixed and the font is loaded. */
+    const items = el.querySelectorAll(".roller-word");
+    const widths = new Array(items.length).fill(0);
+
+    function measureAll() {
+      for (let i = 0; i < items.length; i++) widths[i] = items[i].scrollWidth;
+      applyWidth();
     }
-    requestAnimationFrame(() => requestAnimationFrame(setWidth));
+    function applyWidth() {
+      if (widths[active]) el.style.width = widths[active] + "px";
+    }
+
+    requestAnimationFrame(() => requestAnimationFrame(measureAll));
     const mo = new MutationObserver(() => {
       if (el.classList.contains("is-active") && !started) {
         started = true;
-        setWidth();
+        mo.disconnect(); // nothing left to watch for
+        applyWidth();
         setInterval(() => {
-          const items = el.querySelectorAll(".roller-word");
           items[active].classList.remove("is-visible");
           items[active].classList.add("is-out");
           const prev = active;
           active = (active + 1) % items.length;
           items[active].classList.add("is-visible");
-          setWidth();
+          applyWidth();
           setTimeout(() => items[prev].classList.remove("is-out"), 400);
         }, 2200);
       }
@@ -271,12 +285,39 @@ function applyDelta(delta) {
    their own regions scroll natively, and nothing reaches the prose behind
    them. Anywhere else inside a panel, swallow the gesture rather than
    letting it move a page the reader can't see. */
+
+/* The resume counts too. It isn't one of panels.js's sections — it has its
+   own open/close handlers and doesn't do the is-sectioned chrome retreat —
+   so window.fsPanelIsOpen() doesn't know about it. On desktop that never
+   mattered, because the resume is sized to fit one screen with no scrolling.
+   On a narrow viewport it becomes a full-screen sheet with an overflowing
+   .resume-content, and without this a drag inside it fell through to the
+   handlers below and scrolled the story behind the sheet instead. */
+const resumePanelEl = document.getElementById("resumePanel");
+
+/* Gated on the same breakpoint that turns the resume into a full-screen
+   sheet. Above it the resume is a card in the right column with the story
+   still visible beside it, and scrolling the story while it's open has always
+   worked — so leave that alone. It's only once the sheet covers the viewport
+   and gains its own scroller that it needs to own the gesture. */
+const resumeSheet = window.matchMedia("(max-width: 720px)");
+
+function resumeUp() {
+  return resumeSheet.matches &&
+    !!(resumePanelEl && resumePanelEl.classList.contains("is-open"));
+}
+
 function fsPanelUp() {
-  return typeof window.fsPanelIsOpen === "function" && window.fsPanelIsOpen();
+  const fs = typeof window.fsPanelIsOpen === "function" && window.fsPanelIsOpen();
+  return fs || resumeUp();
 }
 
 function inPanelScroller(target) {
-  return !!(target && target.closest && target.closest(".fs-scroll, .blog-article"));
+  return !!(
+    target &&
+    target.closest &&
+    target.closest(".fs-scroll, .blog-article, .resume-content")
+  );
 }
 
 /* An open project card can be taller than the space it sits in, so it owns
@@ -301,11 +342,40 @@ window.addEventListener(
   { passive: false }
 );
 
+/* ---- touch ----
+   The story is a little over 10,000 virtual pixels long. Mapped 1:1 to
+   finger travel that is fifteen-plus full-height swipes on a phone, with a
+   dead stop at the end of each one, so reading the page became a chore that
+   the same page on a laptop isn't.
+
+   Two changes. TOUCH_GAIN multiplies finger distance, which is a separate
+   constant from SCROLL_PER_WORD on purpose: that one also sets the pace of
+   the word reveal, so changing it would alter the reading rhythm on
+   desktop too. And a release now carries momentum.
+
+   The momentum is fed into `target`, never into `current`. SMOOTHING is
+   what produces the glide, and it owns the easing; pushing a decaying
+   velocity into `target` lets the existing pipeline smooth it exactly as it
+   smooths a wheel gesture, so the motion keeps its character. Writing
+   velocity straight into `current` would stack a second decay curve on top
+   of the first and the page would feel different on touch than on a
+   trackpad. */
+const TOUCH_GAIN = 2.2;
+const FLING_DECAY = 0.94;   // per frame; ~0.5s of coast
+const FLING_MIN = 0.4;      // px/frame below which it's over
+
 let touchY = null;
+let touchT = 0;
+let touchVel = 0; // px per ms, signed the same way as a wheel delta
+let fling = 0;    // px per frame, consumed by the render loop
+
 window.addEventListener(
   "touchstart",
   (e) => {
     touchY = e.touches[0].clientY;
+    touchT = performance.now();
+    touchVel = 0;
+    fling = 0; // a new touch cancels the previous coast
   },
   { passive: true }
 );
@@ -321,14 +391,33 @@ window.addEventListener(
     if (inProjectCard(e.target)) return; // the card scrolls itself
     e.preventDefault();
     const y = e.touches[0].clientY;
-    applyDelta(touchY - y);
+    const now = performance.now();
+    const dy = (touchY - y) * TOUCH_GAIN;
+    applyDelta(dy);
+
+    /* Blend rather than replace, so one jittery sample near the release
+       can't decide the whole throw. */
+    const dt = Math.max(1, now - touchT);
+    touchVel = touchVel * 0.7 + (dy / dt) * 0.3;
+
     touchY = y;
+    touchT = now;
   },
   { passive: false }
 );
-window.addEventListener("touchend", () => {
+
+function endTouch() {
+  if (touchY === null) return;
   touchY = null;
-});
+  // stale velocity from a finger that stopped before lifting isn't a throw
+  if (performance.now() - touchT < 90) fling = touchVel * 16;
+  touchVel = 0;
+}
+window.addEventListener("touchend", endTouch);
+/* Without this an interrupted gesture — a system edge swipe, a call coming
+   in — leaves touchY set, and the next touchmove treats the gap between two
+   unrelated positions as one enormous drag. */
+window.addEventListener("touchcancel", endTouch);
 
 const KEY_DELTAS = {
   ArrowDown: 80,
@@ -532,6 +621,14 @@ let lastPaintedLead = -1;
 let lastLogoFill = -1;
 
 function frame() {
+  /* Coast after a touch release. This moves `target`, so the smoothing below
+     still owns the visual easing — see the note by TOUCH_GAIN. */
+  if (fling !== 0) {
+    applyDelta(fling);
+    fling *= FLING_DECAY;
+    if (Math.abs(fling) < FLING_MIN) fling = 0;
+  }
+
   current += (target - current) * SMOOTHING;
   if (Math.abs(target - current) < SCROLL_SNAP_EPS) current = target;
 
@@ -569,25 +666,64 @@ function frame() {
      you start reading, and colour again only under the cursor. Same threshold
      as the scroll hint, so the cue leaving and the globe settling back read
      as one gesture. */
-  if (window.sphereQuiet) window.sphereQuiet(current > 40);
+  if (typeof window.sphereQuiet === "function") window.sphereQuiet(current > 40);
 
   /* The ramblings and gallery sections are the reward for finishing the
-     read — their buttons rise into view over the last stretch of it. */
-  if (window.endActions) window.endActions(storyProgress);
+     read — their buttons rise into view over the last stretch of it.
 
-  requestAnimationFrame(frame);
+     typeof, not truthiness. panels.js owns this function but it is the last
+     script on the page, and this loop starts at the end of main.js — so the
+     first frame can land before panels.js has run. A plain `if (window.x)`
+     check passed anyway, because an element with id="endActions" makes the
+     browser publish that div as window.endActions, which is very truthy and
+     not at all callable. Calling it threw, and a throw in here used to kill
+     the loop for the rest of the session (see the catch below). */
+  if (typeof window.updateEndActions === "function") {
+    window.updateEndActions(storyProgress);
+  }
+
+  tilt();
 }
 
-requestAnimationFrame(frame);
+/* The loop is the scroll engine: current only ever moves in frame(), so if
+   this chain ever stops, the page still renders and still accepts wheel and
+   touch input — target keeps climbing — but nothing visibly moves again
+   until a reload. That failure mode is indistinguishable from "the site is
+   broken", so re-arming is unconditional and one bad frame costs one frame
+   rather than the session. */
+let frameErrLogged = false;
 
-/* ---- subtle 3D glass tilt toward cursor ---- */
+function loop() {
+  try {
+    frame();
+  } catch (err) {
+    if (!frameErrLogged) {
+      frameErrLogged = true; // once per session; don't flood the console
+      console.error("scroll frame failed:", err);
+    }
+  }
+  requestAnimationFrame(loop);
+}
+
+/* ---- subtle 3D glass tilt toward cursor ----
+   Folded into the scroll loop rather than running a second always-on
+   requestAnimationFrame of its own. It writes one transform, and it needs
+   to be sequenced with the rest of the frame's writes anyway; two
+   independent loops just meant two callbacks and two chances to land either
+   side of a style flush.
+
+   It also does nothing at all until the cursor has actually moved, which on
+   a touch device is never — the old loop ran for the whole session on
+   phones to write a transform that was always the identity. */
 const proseEl = document.getElementById("prose");
 let mouseX = 0.5, mouseY = 0.5;
+let tiltReady = false;
 
 window.addEventListener("mousemove", (e) => {
   mouseX = e.clientX / window.innerWidth;
   mouseY = e.clientY / window.innerHeight;
-});
+  tiltReady = true;
+}, { passive: true });
 
 /* Only write when the cursor has actually moved. This used to set a new
    transform on the whole text block every single frame, including while a
@@ -595,15 +731,17 @@ window.addEventListener("mousemove", (e) => {
    largest layer on the page, at the exact moment the frame budget is tightest. */
 let lastTilt = "";
 
-function tiltFrame() {
+function tilt() {
+  if (!tiltReady) return;
+  // measured-slow hardware doesn't spend frame budget on ±1deg
+  if (document.documentElement.classList.contains("perf-low")) return;
   const rotateY = (mouseX - 0.5) * 2;
   const rotateX = (0.5 - mouseY) * 2;
-  const tilt = `perspective(1200px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-  if (tilt !== lastTilt) {
-    proseEl.style.transform = tilt;
-    lastTilt = tilt;
+  const t = `perspective(1200px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+  if (t !== lastTilt) {
+    proseEl.style.transform = t;
+    lastTilt = t;
   }
-  requestAnimationFrame(tiltFrame);
 }
 
-requestAnimationFrame(tiltFrame);
+requestAnimationFrame(loop);
