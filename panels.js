@@ -59,6 +59,7 @@
   const sections = {
     blog: document.getElementById('blogPanel'),
     gallery: document.getElementById('galleryPanel'),
+    projects: document.getElementById('projectsPanel'),
   };
   const root = document.documentElement;
   const blogArticle = document.getElementById('blogArticle');
@@ -85,6 +86,7 @@
     section.setAttribute('aria-hidden', 'true');
     root.classList.remove('is-sectioned');
     if (key === 'blog') closeArticle();
+    if (key === 'projects') closeProject();
 
     /* The exit is the busiest moment on the page — a full-viewport panel
        travelling, the story and chrome coming back, and the globe drifting in
@@ -93,6 +95,7 @@
        for one that doesn't hitch. */
     clearTimeout(leaveTimer);
     leaveTimer = setTimeout(() => {
+      leaveTimer = null;
       /* First: stop the carousel. Its loop used to run for the rest of the
          session after the first open, so five cards were still being
          transformed every frame all the way through the exit. */
@@ -116,9 +119,17 @@
   function openSection(key) {
     const section = sections[key];
     if (!section || section.classList.contains('is-open')) return;
-    // re-opening mid-exit: drop the leaving state so it rises from where
-    // it is rather than from the shrunken transform
+    /* Re-opening mid-exit: drop the leaving state so it rises from where it
+       is rather than from the shrunken transform.
+
+       Clearing leaveTimer also cancels the only path that ever stopped the
+       carousel loop, so the stop has to happen here as well. Open gallery ->
+       close -> open the blog inside the 1150ms window and the strip's rAF
+       loop used to survive for the rest of the session, transforming and
+       re-filtering five cards every frame behind a closed panel. */
+    if (leaveTimer) carousel.sleep();
     clearTimeout(leaveTimer);
+    leaveTimer = null;
     Object.keys(sections).forEach((k) => sections[k].classList.remove('is-leaving'));
     /* Lay the strip out first. wake() reads the stage's size, and a read
        taken after the class changes below forces the browser to resolve
@@ -182,15 +193,32 @@
      threshold — driven per frame, so there's no CSS transition to lag
      behind the scroll, and they leave just as smoothly on the way up. */
   let shown = -1;
-  window.endActions = function (storyProgress) {
+  let live = -1; // last written value of the clickable flag, see below
+
+  /* Named updateEndActions, not endActions. There is a <div id="endActions">
+     on the page, and the browser publishes every element id as a property of
+     window — so `window.endActions` already existed as that div before this
+     line ever ran, and main.js's `if (window.endActions)` guard happily
+     called a DOM node. Any name that doesn't shadow an id is fine; this one
+     also reads as a verb, which is what it is. */
+  window.updateEndActions = function (storyProgress) {
     const v = smoothstep((storyProgress - 0.955) / 0.045);
     if (Math.abs(v - shown) < 0.002) return;
     shown = v;
     endActions.style.opacity = v.toFixed(3);
     endActions.style.transform =
       'translateX(-50%) translateY(' + ((1 - v) * 16).toFixed(2) + 'px)';
-    endActions.style.pointerEvents = v > 0.85 ? 'auto' : 'none';
-    endActions.setAttribute('aria-hidden', v > 0.85 ? 'false' : 'true');
+
+    /* These two are booleans that flip once on the way in and once on the
+       way out, but they were being rewritten on every frame of the rise.
+       Writing aria-hidden in particular invalidates accessibility state for
+       no reason 60 times a second. */
+    const clickable = v > 0.85;
+    if (clickable !== live) {
+      live = clickable;
+      endActions.style.pointerEvents = clickable ? 'auto' : 'none';
+      endActions.setAttribute('aria-hidden', clickable ? 'false' : 'true');
+    }
   };
 
   document.getElementById('blogClose').addEventListener('click', closeSection);
@@ -287,6 +315,146 @@
 
   document.getElementById('blogBack').addEventListener('click', closeArticle);
 
+  /* ---- work: the projects, for viewports with no globe --------------
+     Below 1500px .sphere is display:none, which removed all nine projects,
+     their drawings and their cards from the page with no other route to
+     them. This is that route.
+
+     The artwork is extracted exactly the way sphere.js does it (see
+     setIcon there): clone the <g> out of the inert #deskTemplate, drop the
+     transform that placed it in the old desk composition and the .desk-hit
+     rect that only mattered there, then frame it with the per-project
+     viewBox authored in projects.js. Same source of truth, so a change to
+     a drawing shows up in both places.
+
+     Rows are built once, lazily, on first open — nine SVG clones is not
+     work worth doing at startup for a panel most visits never open. */
+
+  const PROJECTS = window.PROJECTS || {};
+  const projectList = document.getElementById('projectList');
+  const projectDetail = document.getElementById('projectDetail');
+  const projectDetailBody = document.getElementById('projectDetailBody');
+  const deskTemplate = document.getElementById('deskTemplate');
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  let projectsBuilt = false;
+
+  function projectArt(p) {
+    const src = deskTemplate && deskTemplate.content.getElementById(p.icon.id);
+    if (!src) return null;
+    const art = src.cloneNode(true);
+    art.removeAttribute('id');
+    art.removeAttribute('transform'); // scene placement — upright here
+    art.classList.remove('desk-item');
+    art.querySelectorAll('.desk-hit').forEach((n) => n.remove());
+    const svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('viewBox', p.icon.view);
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.appendChild(art);
+    return svg;
+  }
+
+  function buildProjects() {
+    if (projectsBuilt) return;
+    projectsBuilt = true;
+
+    Object.keys(PROJECTS).forEach((key, i) => {
+      const p = PROJECTS[key];
+      const row = document.createElement('button');
+      row.className = 'proj-row';
+      row.type = 'button';
+      row.style.setProperty('--i', String(i)); // entrance stagger, as blog
+
+      const art = document.createElement('span');
+      art.className = 'proj-art';
+      const svg = projectArt(p);
+      if (svg) art.appendChild(svg);
+
+      const body = document.createElement('span');
+      body.className = 'proj-body';
+
+      const name = document.createElement('span');
+      name.className = 'proj-name';
+      name.textContent = p.name;
+
+      const date = document.createElement('span');
+      date.className = 'proj-date';
+      date.textContent = p.date;
+
+      const arrow = document.createElement('span');
+      arrow.className = 'proj-arrow';
+      arrow.setAttribute('aria-hidden', 'true');
+      arrow.textContent = '→';
+      name.appendChild(arrow);
+
+      body.append(name, date);
+      row.append(art, body);
+      row.addEventListener('click', () => openProject(p));
+      projectList.appendChild(row);
+    });
+  }
+
+  function openProject(p) {
+    projectDetailBody.textContent = '';
+
+    const art = document.createElement('div');
+    art.className = 'proj-detail-art';
+    const svg = projectArt(p);
+    if (svg) art.appendChild(svg);
+
+    const h1 = document.createElement('h1');
+    h1.textContent = p.name;
+
+    const meta = document.createElement('p');
+    meta.className = 'blog-article-meta';
+    meta.textContent = p.date;
+
+    /* The descriptions in projects.js are ☩-prefixed bullets separated by
+       newlines, so they need pre-line to read as a list rather than as one
+       run-on sentence — the same thing .desk-detail .desk-card-desc does for
+       the globe's card. */
+    const desc = document.createElement('p');
+    desc.className = 'proj-desc';
+    desc.textContent = p.desc;
+
+    const chips = document.createElement('div');
+    chips.className = 'blog-tags';
+    (p.chips || []).forEach((c) => {
+      const s = document.createElement('span');
+      s.textContent = c;
+      chips.appendChild(s);
+    });
+
+    projectDetailBody.append(art, h1, meta, desc, chips);
+
+    if (p.url) {
+      const link = document.createElement('a');
+      link.className = 'proj-link';
+      link.href = p.url;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.textContent = 'visit ↗';
+      projectDetailBody.appendChild(link);
+    }
+
+    projectDetail.scrollTop = 0;
+    projectDetail.classList.add('is-open');
+    projectDetail.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeProject() {
+    if (!projectDetail.classList.contains('is-open')) return;
+    projectDetail.classList.remove('is-open');
+    projectDetail.setAttribute('aria-hidden', 'true');
+  }
+
+  document.getElementById('projectBack').addEventListener('click', closeProject);
+  document.getElementById('projectsClose').addEventListener('click', closeSection);
+  document.getElementById('projectsBtn').addEventListener('click', () => {
+    buildProjects();
+    openSection('projects');
+  });
+
   /* ---- gallery: curved carousel ----------------------------------
      A port of the OGL circular-gallery to plain DOM. The cards sit on a
      horizontal strip bent around a very large circle: the further a card
@@ -367,7 +535,10 @@
           snapped = true;
         });
         stage.appendChild(el);
-        items.push({ el: el, figure: figure, extra: 0, index: i });
+        items.push({
+          el: el, figure: figure, extra: 0, index: i,
+          sat: -1, z: -1, // last written values, so render can skip no-ops
+        });
       });
       measure();
     }
@@ -416,10 +587,24 @@
           'translate(-50%, -50%) translate(' + x.toFixed(2) + 'px, ' +
           y.toFixed(2) + 'px) rotate(' + rot.toFixed(3) + 'deg)';
 
-        // focus: 1 for the card at center, fading out over one stride
+        /* focus: 1 for the card at center, fading out over one stride.
+           --sat drives a grayscale() on the card's image, so every write
+           rebuilds a filter chain and re-rasterizes a several-hundred-px
+           photo. Quantizing to 1/24ths means that happens on the order of
+           twenty times a second instead of sixty, which is still finer than
+           the eye can follow a desaturation. zIndex is already integral, so
+           it only needs writing when it actually changes. */
         const focus = Math.max(0, 1 - Math.abs(x) / geo.stride);
-        item.el.style.setProperty('--sat', (focus * focus).toFixed(3));
-        item.el.style.zIndex = String(100 + Math.round(focus * 100));
+        const sat = Math.round(focus * focus * 24) / 24;
+        if (sat !== item.sat) {
+          item.sat = sat;
+          item.el.style.setProperty('--sat', sat.toFixed(3));
+        }
+        const z = 100 + Math.round(focus * 100);
+        if (z !== item.z) {
+          item.z = z;
+          item.el.style.zIndex = String(z);
+        }
       }
     }
 
@@ -550,30 +735,23 @@
      slide hitched while they did — a first open that felt nothing like the
      second. Do it once, early, so the click has nothing left to pay for.
 
-     After the loader, because it owns the opening beat of the page and a
-     canvas animation shouldn't be sharing frames with two dozen image
-     decodes; and at idle after that, so this waits behind anything the
-     reader is actually looking at. */
+     On *intent* rather than at idle, though. Unconditional idle warming meant
+     every visit fetched all ~1.9MB of JPEG and ran two dozen img.decode()
+     calls — tens of megabytes of bitmap held for the session — even for the
+     large majority of readers who never open the gallery, and it landed in
+     the window where a slow machine is still settling into the first scroll.
+     Pointing at the button is a reliable half-second of warning, and focus
+     covers the keyboard path. */
+  let warmed = false;
   function warmCarousel() {
-    const go = () => carousel.prepare();
-    if (window.requestIdleCallback) requestIdleCallback(go, { timeout: 2500 });
-    else setTimeout(go, 500);
+    if (warmed) return;
+    warmed = true;
+    carousel.prepare();
   }
 
-  if (document.documentElement.classList.contains('is-loading')) {
-    const mo = new MutationObserver(() => {
-      if (!document.documentElement.classList.contains('is-loading')) {
-        mo.disconnect();
-        warmCarousel();
-      }
-    });
-    mo.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class'],
-    });
-  } else {
-    warmCarousel();
-  }
+  ['pointerenter', 'pointerdown', 'focus'].forEach((ev) => {
+    galleryBtn.addEventListener(ev, warmCarousel, { passive: true });
+  });
 
   /* ---- keyboard -------------------------------------------------- */
 
@@ -588,8 +766,9 @@
 
       if (e.key === 'Escape') {
         e.preventDefault();
-        // peel one layer at a time: the reading view, then the section
+        // peel one layer at a time: the detail view, then the section
         if (blogArticle.classList.contains('is-open')) closeArticle();
+        else if (projectDetail.classList.contains('is-open')) closeProject();
         else closeSection();
         return;
       }
