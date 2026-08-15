@@ -46,3 +46,17 @@ async function fetchNowPlaying() {
 
 fetchNowPlaying();
 if (ENDPOINT) setInterval(fetchNowPlaying, POLL_INTERVAL);
+
+/* Touch equivalent for the hover reveal. On a device with no hover the track
+   name had no way of ever being shown, so the chip reads as a decorative
+   Spotify logo. Tapping the logo toggles it open instead; tapping the name
+   itself still follows the link, and a tap anywhere else closes it. */
+if (window.matchMedia("(hover: none)").matches && widget) {
+  widget.addEventListener("click", (e) => {
+    if (e.target.closest("#npText")) return; // that's the link, let it through
+    widget.classList.toggle("is-expanded");
+  });
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest("#nowPlaying")) widget.classList.remove("is-expanded");
+  });
+}
