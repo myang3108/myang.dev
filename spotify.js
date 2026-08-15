@@ -20,7 +20,7 @@ const npText = document.getElementById("npText");
 async function fetchNowPlaying() {
   if (!ENDPOINT) {
     npText.textContent = "The Peace by Underscores";
-    npText.href = "https://open.spotify.com/track/3xKsf9qdS1CyvXSMEid6g8";
+    npText.href = "https://open.spotify.com/track/6wm3t4VpTxSFfOUgTMlHZM";
     widget.classList.remove("is-idle");
     return;
   }

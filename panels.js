@@ -12,105 +12,14 @@
 (function () {
   const POSTS = [
     {
-      title: 'Traversing 750M edges without waking the on-call',
+      title: 'check back later :p',
       date: 'Jul 2026',
-      read: '6 min read',
-      tags: ['Neptune', 'openCypher', 'Lambda'],
+      read: '2 min read',
+      tags: ['nontech'],
       excerpt:
-        'What I learned building a customer-behavior knowledge graph big enough that every query plan mistake costs a full second.',
+        '',
       body: `
-        <p>A graph with 750 million weighted relationships is not a bigger version
-        of a graph with 750 thousand. The queries that feel instant in a notebook
-        against a sample turn into full-index scans the moment the edge count
-        crosses whatever threshold the planner was quietly relying on.</p>
-
-        <h2>Bound the traversal, not the result</h2>
-        <p>The first version of the recommendation query looked like the obvious
-        thing: start at a customer, walk out to products, walk back to other
-        customers, rank. It was correct and it was unusable. The fix wasn't a
-        faster machine — it was putting a ceiling on the hop-out step so the
-        planner never materialized the wide middle of the traversal.</p>
-        <blockquote>The cheapest optimization in graph work is refusing to
-        visit a node you were never going to rank.</blockquote>
-
-        <h2>Small samples lie</h2>
-        <p>Raw co-purchase counts rank obscure pairs far too highly — two people
-        buying the same odd thing looks like a stronger signal than two hundred
-        people buying a common one. Scoring affinity with a Wilson lower bound
-        instead of a raw ratio pushes low-sample pairs down toward the mean,
-        which is exactly the behavior you want when the tail is most of the graph.</p>
-
-        <h2>Make rebuilds boring</h2>
-        <p>The thing I'd insist on from day one next time: deterministic
-        rebuilds. Same inputs, same edge weights, byte for byte. It turns
-        "did my change help?" from an argument into a diff.</p>
-      `,
-    },
-    {
-      title: 'An MCP server is mostly a documentation problem',
-      date: 'May 2026',
-      read: '4 min read',
-      tags: ['MCP', 'LLM', 'Tooling'],
-      excerpt:
-        'The hard part of exposing a system to an agent is not the transport. It is writing tool descriptions that a model can actually act on.',
-      body: `
-        <p>I've now wrapped three very different systems — a seismic simulation
-        pipeline, a graph endpoint, and an internal shopping service — as MCP
-        servers. Every time, the code was the easy half.</p>
-
-        <h2>The description is the API</h2>
-        <p>A model doesn't read your implementation. It reads the name, the
-        description, and the parameter schema, and it decides from those alone.
-        A tool called <code>query</code> described as "runs a query" will be
-        called wrongly and constantly. The same tool called
-        <code>find_related_products</code> with a description that states what
-        it returns, what it costs, and when <em>not</em> to reach for it gets
-        used correctly on the first try.</p>
-
-        <h2>Return shapes the model can reason about</h2>
-        <ul>
-          <li>Prefer a handful of labeled fields over a large raw blob.</li>
-          <li>Say why something is missing rather than returning empty.</li>
-          <li>Put the number the model needs to compare in the response — don't
-          make it do arithmetic across three calls.</li>
-        </ul>
-
-        <h2>Fewer, sharper tools</h2>
-        <p>Twelve overlapping tools is worse than five clearly separated ones.
-        Overlap is where a model hesitates, and hesitation shows up as latency
-        and retries in the trace.</p>
-      `,
-    },
-    {
-      title: 'Building this site: motion as the only decoration',
-      date: 'Mar 2026',
-      read: '5 min read',
-      tags: ['Canvas', 'CSS', 'Design'],
-      excerpt:
-        'No images in the layout, no color beyond one accent. Everything that carries feeling here is timing.',
-      body: `
-        <p>The constraint I set was: one typeface, one accent color, no
-        decorative imagery in the layout itself. Whatever personality the site
-        has would have to come from how things move.</p>
-
-        <h2>Reveal at reading speed</h2>
-        <p>The prose activates word by word as you scroll, tied to a smoothed
-        scroll position rather than the raw wheel delta. The smoothing is the
-        whole trick — raw deltas feel mechanical, and a little inertia makes the
-        page feel like it has weight.</p>
-
-        <h2>Let one gesture finish before the next starts</h2>
-        <p>The work panel traces its outline open over about 1.2 seconds. Early
-        on, clicking the resume chip mid-trace left two animations fighting
-        underneath each other. The fix was a small state machine: mid-transition
-        clicks become <em>intent</em>, applied once the current sequence lands,
-        never a second sequence layered on a live one.</p>
-
-        <h2>Everything has an off switch</h2>
-        <p>Every animation here collapses under
-        <code>prefers-reduced-motion</code>. Blur especially — it's a common
-        migraine trigger, so the reduced-motion path recedes with opacity and
-        contrast only.</p>
+        <p></p>
       `,
     },
   ];
