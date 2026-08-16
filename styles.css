@@ -2958,8 +2958,12 @@ html.perf-low .prose {
 
   /* Clears the nav and nothing else — the ramblings and the photos are
      behind the "more" button now, so they cost the story no height. */
+  /* Every edge here is paying for the type size: 70px is the 62px nav plus a
+     hair, 16px at the sides is a wider measure and so fewer lines, and 60px
+     at the foot is exactly what clears the scroll cue once that cue has been
+     moved down to sit on the footer (below). */
   .viewport {
-    padding: calc(84px + env(safe-area-inset-top)) 20px 62px;
+    padding: calc(70px + env(safe-area-inset-top)) 16px 60px;
     align-items: flex-start;
   }
 
@@ -2967,18 +2971,22 @@ html.perf-low .prose {
      min-width:auto stops it shrinking below its content, so an unbounded
      max-width let the lines run off the right edge instead of wrapping. */
   .prose {
-    /* 14.5px is 15% down from the 17px this was, and the ceiling here. The
-       floor matters just as much: the story is one paragraph that has to
-       fit one screen without scrolling, and "one screen" is 844px on a
-       14 Pro Max, 667px on an SE and 640px on a budget Android. Sizing off
-       svh rather than a constant is what lets the short ones fit it too —
-       1.72svh holds the 14.5 cap from about 840px up and eases to the 11px
-       floor at 640. svh, not vh: vh is the tall viewport, the one you only
-       get once iOS has collapsed its URL bar, so sizing to it would spill
-       the last lines behind the bar on arrival — the same reason .track is
-       100svh above. */
-    font-size: clamp(11px, 1.72svh, 14.5px);
-    line-height: 1.65;
+    /* The story is one paragraph that has to fit one screen without
+       scrolling, and "one screen" is 852px on a 16, ~745 of that once
+       Safari's bars are showing, 667px on an SE and 640px on a budget
+       Android — so the size is a function of the height rather than a
+       constant, and every term here is 15% up from the last pass.
+
+       svh, not vh: vh is the *tall* viewport, the one you only get after
+       iOS collapses its URL bar, so sizing to it would spill the last lines
+       behind the bar on arrival — the same reason .track is 100svh above.
+       On a 16 in Safari 1.98svh lands around 14.7px. */
+    font-size: clamp(12.6px, 1.98svh, 16.3px);
+    /* 1.65 was desktop's rhythm on a screen with height to spare. Tighter
+       here is what pays for the bigger glyphs: leading is the cheapest
+       height on the page, and it is the one thing you can take that doesn't
+       make the letters themselves any smaller. */
+    line-height: 1.42;
     max-width: 100%;
     min-width: 0;
   }
@@ -3002,21 +3010,23 @@ html.perf-low .prose {
 
   .nav-chip { font-size: 11px; padding: 7px 12px; height: 31px; }
 
-  /* Some touch browsers still resolve :hover on tap, which would open the
-     track name to its full 220px and push the nav off a 390px screen. Cap it
-     regardless of which rule wins. */
-  .now-playing:hover .np-expand,
-  .now-playing.is-expanded .np-expand { max-width: 42vw; }
-
   .footer {
     padding: 14px 18px calc(14px + env(safe-area-inset-bottom));
     gap: 12px;
   }
 
+  /* Down onto the footer's shoulder. It used to float 56px up, which put it
+     in the middle of the space the story needs for its last two lines — and
+     it is a cue you read once, not a fixture. */
   .scroll-hint {
-    bottom: calc(56px + env(safe-area-inset-bottom));
-    font-size: 14px;
+    bottom: calc(42px + env(safe-area-inset-bottom));
+    font-size: 13px;
   }
+
+  /* The now playing chip is desktop's flourish: it costs 44px of the one
+     row that has none to spare, and its whole point is the track name that
+     only appears on hover. */
+  .now-playing { display: none; }
 
   .nav-menu-btn { display: inline-flex; }
 
@@ -3213,6 +3223,56 @@ html.perf-low .prose {
   .now-playing { height: 28px; }
   .spotify-logo { padding: 6px; }
   .end-actions { right: 12px; }
+}
+
+/* ---- portrait only ---------------------------------------------
+   Everything about this page assumes height: the story is one paragraph
+   sized to fill a screen, and on its side a phone offers about 390px of it
+   for text that wants 600. Rather than a landscape layout that can only be
+   a worse version of the page, it asks for the phone back.
+
+   The two bounds are what make this a phone rule rather than a
+   short-window rule. A phone on its side is 320-430px tall and at most
+   932px wide (a 16 Pro Max); an iPad is 744 tall and a laptop more, so
+   tablets and desktops stay out of it either way, and a desktop window
+   dragged down to a letterbox is still far too wide to qualify. Nothing
+   here can be a true orientation lock — iOS Safari gives a page no way to
+   ask — so it is a cover, held above every other layer including the
+   loader. */
+.rotate-note { display: none; }
+
+@media (orientation: landscape) and (max-height: 520px) and (max-width: 950px) {
+  .rotate-note {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 24px;
+    text-align: center;
+    background: var(--bg);
+    color: var(--ink);
+  }
+
+  .rotate-note svg {
+    width: 34px;
+    height: 34px;
+    opacity: 0.75;
+  }
+
+  .rotate-note span {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .rotate-note small {
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
 }
 
 /* ---- touch hardening -------------------------------------------

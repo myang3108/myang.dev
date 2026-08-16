@@ -44,14 +44,20 @@ async function fetchNowPlaying() {
   }
 }
 
-fetchNowPlaying();
-if (ENDPOINT) setInterval(fetchNowPlaying, POLL_INTERVAL);
+/* The phone layout hides the chip outright — it costs 44px of a nav row that
+   has none to spare. Nothing below this needs doing when there's nothing to
+   show: no request for a track name no one can read, and no document-level
+   click listener firing on every tap of the story. */
+const hidden = window.matchMedia("(max-width: 720px)").matches;
+
+if (!hidden) fetchNowPlaying();
+if (ENDPOINT && !hidden) setInterval(fetchNowPlaying, POLL_INTERVAL);
 
 /* Touch equivalent for the hover reveal. On a device with no hover the track
    name had no way of ever being shown, so the chip reads as a decorative
    Spotify logo. Tapping the logo toggles it open instead; tapping the name
    itself still follows the link, and a tap anywhere else closes it. */
-if (window.matchMedia("(hover: none)").matches && widget) {
+if (!hidden && window.matchMedia("(hover: none)").matches && widget) {
   widget.addEventListener("click", (e) => {
     if (e.target.closest("#npText")) return; // that's the link, let it through
     widget.classList.toggle("is-expanded");

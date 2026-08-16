@@ -537,6 +537,23 @@
       }
     })();
   </script>
+  <!-- Portrait only. The story is one paragraph sized to fill one screen,
+       and a phone on its side is 390px of height for text that needs about
+       600 — there is no landscape layout to fall back to, so the page asks
+       for the phone back rather than showing a broken one. Revealed purely
+       by the media query in styles.css; there is no orientation lock a page
+       can call on iOS Safari. -->
+  <div class="rotate-note" role="alert">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="7" y="2" width="10" height="20" rx="2.2" stroke="currentColor" stroke-width="1.6"/>
+      <path d="M10.6 19.2h2.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      <path d="M3.6 9.4a9 9 0 0 1 1.9-3.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      <path d="M2.2 6.4 3.5 9.9 7 8.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span>turn your phone upright</span>
+    <small>this one's built to be read the tall way</small>
+  </div>
+
   <script src="loader.js"></script>
   <script src="projects.js"></script>
   <script src="sphere.js"></script>
