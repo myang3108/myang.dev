@@ -36,6 +36,11 @@
   let glyphAt = null;   // Uint8Array, which character index inked each cell
   let noise = null;     // Float32Array, stable per-cell randomness
   let ink = "#232323";
+  /* Cells above this draw a faint off-letter glyph — the grain. It's a
+     share of the grid, so the finer phone grid (below) would have drawn
+     twice as many of them for the same look; build() lowers the share to
+     keep the count, and the cost, where it was. */
+  let grainCut = 0.93;
 
   /* ---- glyph atlas ----
      draw() used to build a font shorthand string and assign ctx.font for
@@ -86,9 +91,22 @@
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.imageSmoothingQuality = "high";
 
-    cell = Math.max(6, Math.round(Math.min(w, h) / 86));
+    /* The halftone is only legible if each letter gets enough cells across
+       it, and that count is what the phone was starving. min(w, h) on a
+       390x844 phone is the *width*, so the cell came out at the 6px floor,
+       leaving 65 columns for the whole screen and about five per character —
+       against roughly twelve on a desktop, which is why "myang.dev" arrived
+       as a jumble of glyph blobs rather than a wordmark.
+
+       Below 720px the cell is derived from the width alone and allowed to go
+       finer, which puts the per-character count back in the same range. */
+    const narrow = w < 720;
+    cell = narrow
+      ? Math.max(4, Math.round(w / 98))
+      : Math.max(6, Math.round(Math.min(w, h) / 86));
     cols = Math.ceil(w / cell);
     rows = Math.ceil(h / cell);
+    grainCut = narrow ? 0.965 : 0.93;
 
     // largest a covered cell's glyph ever gets: cov and local both at 1
     buildAtlas(cell * (0.74 + 0.44));
@@ -113,10 +131,13 @@
     mc.textBaseline = "middle";
     mc.textAlign = "left";
 
-    // size the whole word to ~74% of the width, then place chars by run
+    /* Size the whole word to ~74% of the width, then place chars by run.
+       A phone gets 86%: the margins either side are what a wide screen has
+       to spare, and here they are the difference between nine legible
+       characters and nine smudges. */
     mc.font = FONT;
     const base = mc.measureText(TEXT).width || 1;
-    const target = mW * 0.74;
+    const target = mW * (narrow ? 0.86 : 0.74);
     const size = Math.max(6, (100 * target) / base);
     const sizedFont = FONT.replace("100px", size + "px");
     mc.font = sizedFont;
@@ -225,7 +246,7 @@
           size = cell * (0.74 + 0.44 * Math.min(1, cov)) * (0.7 + 0.3 * local);
           // each letter is built from copies of itself
           glyphIdx = glyphAt[i];
-        } else if (rnd > 0.93) {
+        } else if (rnd > grainCut) {
           // sparse faint marks outside the letterforms — the grain.
           // borrow the letter from the nearest column so it stays on-theme
           alpha = 0.1 * local;

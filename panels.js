@@ -195,6 +195,35 @@
   let shown = -1;
   let live = -1; // last written value of the clickable flag, see below
 
+  /* On phones the row is not the end of the story, it's the chrome under the
+     nav (see the phone layout in styles.css), so the progress drive has
+     nothing to say about it: no inline opacity or transform to fight the
+     pinned rule, and aria-hidden off for good so the two buttons are reachable
+     before the read rather than after it. The listener matters because the
+     breakpoint can be crossed by rotating the phone — leaving the desktop
+     side, the inline styles have to go or the row stays frozen at whatever
+     opacity the last frame wrote. */
+  const phone = window.matchMedia('(max-width: 720px)');
+  let pinned = false;
+
+  function pinTop() {
+    if (pinned) return;
+    pinned = true;
+    shown = -1;
+    live = -1;
+    endActions.style.opacity = '';
+    endActions.style.transform = '';
+    endActions.style.pointerEvents = '';
+    endActions.setAttribute('aria-hidden', 'false');
+  }
+
+  function unpinTop() {
+    pinned = false;
+  }
+
+  if (phone.matches) pinTop();
+  phone.addEventListener('change', (e) => (e.matches ? pinTop() : unpinTop()));
+
   /* Named updateEndActions, not endActions. There is a <div id="endActions">
      on the page, and the browser publishes every element id as a property of
      window — so `window.endActions` already existed as that div before this
@@ -202,6 +231,7 @@
      called a DOM node. Any name that doesn't shadow an id is fine; this one
      also reads as a verb, which is what it is. */
   window.updateEndActions = function (storyProgress) {
+    if (pinned) return;
     const v = smoothstep((storyProgress - 0.955) / 0.045);
     if (Math.abs(v - shown) < 0.002) return;
     shown = v;

@@ -85,6 +85,14 @@ html.is-loading .track {
   opacity: 0;
 }
 
+/* The actions row joins them, but has to say so louder: on phones it is
+   pinned lit with `opacity: 1 !important` (it is chrome there, not a reward
+   for finishing the read), and that would otherwise have it fade up on its
+   own schedule instead of with the nav above it. */
+html.is-loading .end-actions {
+  opacity: 0 !important;
+}
+
 .nav {
   transition: opacity 800ms ease 150ms;
 }
@@ -2399,8 +2407,6 @@ html.is-sectioned .nav {
   .blog-rail { flex-direction: row; align-items: baseline; gap: 10px; }
   .blog-card-title { font-size: 21px; }
   .blog-article h1 { font-size: 26px; }
-  /* the two buttons stack rather than squeeze */
-  .end-actions { flex-direction: column; align-items: center; bottom: 54px; }
 }
 
 /* ---- the buttons at the end of the story ------------------------
@@ -2778,15 +2784,15 @@ html.perf-low .prose {
    order decides, and a `display: none` written afterwards wins everywhere. */
 .nav-chip--projects { display: none; }
 
-.footer-social {
+.end-social {
   display: none;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   pointer-events: auto;
 }
 
-.footer-social .nav-icon { width: 30px; height: 30px; }
-.footer-social .nav-icon svg { width: 16px; height: 16px; }
+.end-social .nav-icon { width: 30px; height: 30px; }
+.end-social .nav-icon svg { width: 16px; height: 16px; }
 
 /* ---- the work panel replaces the globe below 1500px ------------
    Between 720px and 1500px there was previously neither a globe nor any
@@ -2897,13 +2903,21 @@ html.perf-low .prose {
      so a 100vh column has its last line permanently under the chrome. */
   .track { height: 100svh; }
 
-  .viewport { padding: 96px 20px 72px; align-items: flex-start; }
+  /* Top padding clears the nav *and* the actions row pinned under it, so
+     "hello hello!" starts below both rather than behind them. */
+  .viewport {
+    padding: calc(104px + env(safe-area-inset-top)) 20px 72px;
+    align-items: flex-start;
+  }
 
   /* 100%, not none: .prose is a flex item, and a flex item's default
      min-width:auto stops it shrinking below its content, so an unbounded
      max-width let the lines run off the right edge instead of wrapping. */
   .prose {
-    font-size: 17px;
+    /* 15% down from 17px: the story is one paragraph sized to the screen it
+       is read on, and at 17px the last lines sat under the footer on a
+       390x844 phone once the actions row took a slice off the top. */
+    font-size: 14.5px;
     line-height: 1.65;
     max-width: 100%;
     min-width: 0;
@@ -2933,24 +2947,84 @@ html.perf-low .prose {
     gap: 12px;
   }
 
-  /* the social links, rehoused out of the nav */
-  .footer-social { display: flex; }
-  .footer-copyright { display: none; }
-
   .scroll-hint {
     bottom: calc(56px + env(safe-area-inset-bottom));
     font-size: 14px;
   }
 
+  /* ---- the actions row, moved to the top ------------------------
+     On desktop these two buttons are the reward for finishing the read, so
+     they rise off the bottom of the screen as the last words land. On a
+     phone that meant the only route to the ramblings and the photos was a
+     full scroll of the story, every time. Here the row is pinned under the
+     nav and lit from the first frame instead — same two buttons, plus the
+     social links, centred on one line above "hello hello!".
+
+     The !important on all three is deliberate: panels.js writes opacity,
+     transform and pointer-events as *inline* styles every frame from the
+     reading progress, and inline styles outrank a plain rule. panels.js
+     also stops writing them below 720px (see pinTop there), but these keep
+     the row visible through the frames before that decision is made and
+     through a desktop-to-phone resize. */
   .end-actions {
-    bottom: calc(54px + env(safe-area-inset-bottom));
-    left: 20px;
-    right: 20px;
+    top: calc(58px + env(safe-area-inset-top));
+    bottom: auto;
+    left: 0;
+    right: 0;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    padding: 0 12px;
+    opacity: 1 !important;
     transform: none !important;
-    align-items: stretch;
+    /* The row is full-bleed so its contents can centre against the screen
+       rather than against each other, which leaves dead space either side of
+       the buttons — and the story is dragged, not scrolled, so a band of that
+       space taking the touch would be a 30px stripe under the nav where the
+       page won't move. The controls opt back in individually below. */
+    pointer-events: none !important;
+    /* Only here. On desktop the opacity is written per frame from the
+       reading progress and a transition would lag behind the scroll, which
+       is why the base rule has none. */
+    transition: opacity 800ms ease 150ms;
   }
 
-  .end-action { justify-content: center; }
+  /* Three controls and two chips on one 390px line: the chips lose the
+     desktop's roomy padding and drop a point of type, which is what buys
+     the social links a place in the row rather than a second one. */
+  .end-action {
+    justify-content: center;
+    font-size: 11px;
+    gap: 6px;
+    padding: 8px 11px;
+    border-radius: 18px;
+    pointer-events: auto;
+  }
+
+  .end-action svg { width: 12px; height: 12px; }
+
+  /* the social links, rehoused out of the nav and into that same row */
+  .end-social { display: flex; }
+  .end-social .nav-icon { width: 28px; height: 28px; }
+  .end-social .nav-icon svg { width: 15px; height: 15px; }
+
+  /* The row is chrome now, not content, so it leaves with the rest of the
+     chrome when a section opens — without this it stayed lit under the
+     panel's own topbar during the 880ms the panel takes to arrive. */
+  html.is-sectioned .end-actions {
+    opacity: 0 !important;
+    transform: translateY(-3vh) !important;
+    transition: transform 880ms cubic-bezier(0.22, 1, 0.24, 1),
+                opacity 420ms ease;
+  }
+
+  /* The controls, not just their row: the panel slides up from the bottom
+     over 880ms, so for most of that the top of the screen is still uncovered
+     and these would be invisible but tappable. */
+  html.is-sectioned .end-action,
+  html.is-sectioned .end-social { pointer-events: none; }
 
   .proj-row { grid-template-columns: 56px 1fr; gap: 14px; padding: 17px 2px; }
   .proj-art { height: 46px; }
@@ -3031,6 +3105,23 @@ html.perf-low .prose {
   .resume-entry-sub span { white-space: normal; }
 
   .blog-article-meta + p::first-letter { font-size: 34px; }
+}
+
+/* ---- the last narrow phones ------------------------------------
+   Five controls on one 320px line is not a fit anyone wins: the two labels
+   alone are most of the width. The row is allowed to wrap there — the
+   social links drop to a second line under the buttons — and the only thing
+   that has to change is where the story starts, or the first line would be
+   sitting behind them. */
+@media (max-width: 360px) {
+  .viewport { padding-top: calc(140px + env(safe-area-inset-top)); }
+  .end-action { padding: 8px 10px; }
+  /* the second row costs the story about three lines; this buys them back */
+  .prose { font-size: 13.5px; }
+  /* at 320px the wordmark and the work chip meet in the middle */
+  .nav-logo { font-size: 16px; }
+  .nav { padding: calc(14px + env(safe-area-inset-top)) 14px 14px; }
+  .nav-right { gap: 8px; }
 }
 
 /* ---- touch hardening -------------------------------------------
