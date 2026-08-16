@@ -682,7 +682,7 @@ function frame() {
     window.updateEndActions(storyProgress);
   }
 
-  tilt();
+  paintProse(storyProgress);
 }
 
 /* The loop is the scroll engine: current only ever moves in frame(), so if
@@ -725,22 +725,72 @@ window.addEventListener("mousemove", (e) => {
   tiltReady = true;
 }, { passive: true });
 
-/* Only write when the cursor has actually moved. This used to set a new
-   transform on the whole text block every single frame, including while a
-   full-screen section was animating over it — a needless invalidation of the
-   largest layer on the page, at the exact moment the frame budget is tightest. */
-let lastTilt = "";
+/* ---- the read-head slide (phones) ----
+   On a desktop the whole story fits the screen and the scroll only inks it.
+   A phone doesn't have the height for that: the type has to be big enough to
+   read in a hand, and at that size the paragraph is taller than the screen.
+   Rather than shrink the type until it fits — which is where the last few
+   passes kept ending up — the block rides upward as the read head advances,
+   so the words being inked are always the words in view. The scroll is the
+   same virtual scroll; this is one more thing it drives.
 
-function tilt() {
-  if (!tiltReady) return;
+   slideMax is the overflow and nothing more, so a screen the story already
+   fits gets 0 and behaves exactly as before. That's why desktop needs no
+   special case — it simply never overflows. */
+const viewportEl = document.querySelector(".viewport");
+const phoneLayout = window.matchMedia("(max-width: 720px)");
+let slideMax = 0;
+
+function measureSlide() {
+  /* Only where .viewport lays the story out from the top. On desktop it is
+     centred, so translating from a centred start would ride the first line
+     up off the screen rather than reveal the last. */
+  if (!phoneLayout.matches || !viewportEl) {
+    slideMax = 0;
+    return;
+  }
+  const cs = getComputedStyle(viewportEl);
+  const avail = viewportEl.clientHeight -
+    parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+  slideMax = Math.max(0, proseEl.offsetHeight - avail);
+}
+
+/* Measured, not computed per frame: offsetHeight forces layout, and the
+   answer only changes when the box does. Fonts land after first paint and
+   reflow the paragraph, which is the one that bites if you only measure on
+   load. */
+measureSlide();
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(measureSlide);
+}
+let measureT = 0;
+window.addEventListener("resize", () => {
+  clearTimeout(measureT);
+  measureT = setTimeout(measureSlide, 150);
+});
+phoneLayout.addEventListener("change", measureSlide);
+
+/* One writer for this element's transform, because there are now two things
+   with an opinion about it and the last one to write would otherwise erase
+   the other. Still only writes when the string actually changes: this used
+   to set a new transform on the largest layer on the page every single
+   frame, including while a full-screen section animated over it. */
+let lastTransform = "";
+
+function paintProse(progress) {
+  let t = "";
+  if (slideMax > 0) {
+    t = `translate3d(0, ${(-slideMax * progress).toFixed(1)}px, 0)`;
+  }
   // measured-slow hardware doesn't spend frame budget on ±1deg
-  if (document.documentElement.classList.contains("perf-low")) return;
-  const rotateY = (mouseX - 0.5) * 2;
-  const rotateX = (0.5 - mouseY) * 2;
-  const t = `perspective(1200px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-  if (t !== lastTilt) {
+  if (tiltReady && !document.documentElement.classList.contains("perf-low")) {
+    const rotateY = (mouseX - 0.5) * 2;
+    const rotateX = (0.5 - mouseY) * 2;
+    t += ` perspective(1200px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+  }
+  if (t !== lastTransform) {
     proseEl.style.transform = t;
-    lastTilt = t;
+    lastTransform = t;
   }
 }
 

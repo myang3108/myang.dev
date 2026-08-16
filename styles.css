@@ -2956,14 +2956,50 @@ html.perf-low .prose {
      so a 100vh column has its last line permanently under the chrome. */
   .track { height: 100svh; }
 
+  /* Now that the story is taller than its box and slides through it, both
+     ends of that box are cuts — lines ride up into the nav and the tail sits
+     under the footer. These two are the edges of the window it moves behind:
+     the page's own background, faded, so text arrives and leaves instead of
+     being sliced off. Painted over the story (z-9) and under the nav and
+     footer (z-10), which is what keeps those two legible.
+
+     Gradients rather than a mask on .viewport on purpose: the story repaints
+     every frame as words take ink, and masking that layer would mean
+     resolving per-pixel alpha across the whole paragraph on every one of
+     those repaints. These are two static strips the compositor can leave
+     alone. Their heights are exactly the viewport's padding, so each fade
+     ends where the text's own box begins and no live line is ever dimmed. */
+  .track::before,
+  .track::after {
+    content: "";
+    position: fixed;
+    left: 0;
+    right: 0;
+    z-index: 9;
+    pointer-events: none;
+  }
+
+  .track::before {
+    top: 0;
+    height: calc(70px + env(safe-area-inset-top));
+    background: linear-gradient(to bottom, var(--bg) 72%, transparent);
+  }
+
+  .track::after {
+    bottom: 0;
+    height: 60px;
+    background: linear-gradient(to top, var(--bg) 45%, transparent);
+  }
+
   /* Clears the nav and nothing else — the ramblings and the photos are
      behind the "more" button now, so they cost the story no height. */
-  /* Every edge here is paying for the type size: 70px is the 62px nav plus a
-     hair, 16px at the sides is a wider measure and so fewer lines, and 60px
-     at the foot is exactly what clears the scroll cue once that cue has been
-     moved down to sit on the footer (below). */
+  /* 70px is the 62px nav plus a hair; 60px at the foot clears the scroll cue
+     once that cue has moved down onto the footer (below). The sides are back
+     to a proper 20px — they were squeezed to 16 to win a few lines back, and
+     that stopped being the way to pay for type size the moment the story was
+     allowed to slide (see the read-head slide in main.js). */
   .viewport {
-    padding: calc(70px + env(safe-area-inset-top)) 16px 60px;
+    padding: calc(70px + env(safe-area-inset-top)) 20px 60px;
     align-items: flex-start;
   }
 
@@ -2971,24 +3007,26 @@ html.perf-low .prose {
      min-width:auto stops it shrinking below its content, so an unbounded
      max-width let the lines run off the right edge instead of wrapping. */
   .prose {
-    /* The story is one paragraph that has to fit one screen without
-       scrolling, and "one screen" is 852px on a 16, ~745 of that once
-       Safari's bars are showing, 667px on an SE and 640px on a budget
-       Android — so the size is a function of the height rather than a
-       constant, and every term here is 15% up from the last pass.
+    /* Still a function of the screen's height rather than a constant, so a
+       small phone gets a proportionate measure — but it is no longer the
+       height that decides what *fits*, because the story slides now. Every
+       term is 10% up from the last pass; on a 16 in Safari (~745svh) this
+       lands around 16.2px.
 
        svh, not vh: vh is the *tall* viewport, the one you only get after
-       iOS collapses its URL bar, so sizing to it would spill the last lines
-       behind the bar on arrival — the same reason .track is 100svh above.
-       On a 16 in Safari 1.98svh lands around 14.7px. */
-    font-size: clamp(12.6px, 1.98svh, 16.3px);
-    /* 1.65 was desktop's rhythm on a screen with height to spare. Tighter
-       here is what pays for the bigger glyphs: leading is the cheapest
-       height on the page, and it is the one thing you can take that doesn't
-       make the letters themselves any smaller. */
-    line-height: 1.42;
+       iOS collapses its URL bar, so the first screenful would be sized for
+       room that isn't there yet — the same reason .track is 100svh. */
+    font-size: clamp(13.9px, 2.18svh, 17.9px);
+    /* Back open to something close to desktop's rhythm. This was squeezed
+       to 1.42 when every line had to fit one screen; sliding is what pays
+       for the leading now. */
+    line-height: 1.55;
     max-width: 100%;
     min-width: 0;
+    /* The slide writes this element's transform every frame from a scroll
+       value that is already smoothed; a 150ms ease on top of that is pure
+       lag behind the finger. (Desktop keeps it — there it eases the tilt.) */
+    transition: none;
   }
 
   /* Six controls in a space-between row do not fit 390px. The social links
