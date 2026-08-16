@@ -85,14 +85,6 @@ html.is-loading .track {
   opacity: 0;
 }
 
-/* The actions row joins them, but has to say so louder: on phones it is
-   pinned lit with `opacity: 1 !important` (it is chrome there, not a reward
-   for finishing the read), and that would otherwise have it fade up on its
-   own schedule instead of with the nav above it. */
-html.is-loading .end-actions {
-  opacity: 0 !important;
-}
-
 .nav {
   transition: opacity 800ms ease 150ms;
 }
@@ -1089,6 +1081,64 @@ html.is-loading .end-actions {
 }
 
 .theme-toggle:hover { background: rgba(0, 0, 0, 0.06); }
+
+/* -- the phone's "more" button: hidden until the phone layout reveals it -- */
+.nav-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  pointer-events: auto;
+  color: var(--ink);
+  padding: 0;
+  transition: background-color 300ms ease;
+}
+
+[data-theme="dark"] .nav-menu-btn { border-color: rgba(255, 255, 255, 0.15); }
+
+.nav-menu-btn.is-open { background: rgba(0, 0, 0, 0.05); }
+
+[data-theme="dark"] .nav-menu-btn.is-open { background: rgba(255, 255, 255, 0.08); }
+
+/* Three bars that fold into a cross. Absolute rather than a flex column so
+   the two that survive can rotate about the middle one's line without the
+   layout moving under them. */
+.nav-menu-bars {
+  position: relative;
+  display: block;
+  width: 15px;
+  height: 11px;
+}
+
+.nav-menu-bars span {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 1.6px;
+  border-radius: 1px;
+  background: var(--ink);
+  transition: transform 420ms cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 180ms ease;
+}
+
+.nav-menu-bars span:nth-child(1) { top: 0; }
+.nav-menu-bars span:nth-child(2) { top: 4.7px; }
+.nav-menu-bars span:nth-child(3) { top: 9.4px; }
+
+.nav-menu-btn.is-open .nav-menu-bars span:nth-child(1) {
+  transform: translateY(4.7px) rotate(45deg);
+}
+
+.nav-menu-btn.is-open .nav-menu-bars span:nth-child(2) { opacity: 0; }
+
+.nav-menu-btn.is-open .nav-menu-bars span:nth-child(3) {
+  transform: translateY(-4.7px) rotate(-45deg);
+}
 
 .theme-icon {
   width: 18px;
@@ -2784,11 +2834,14 @@ html.perf-low .prose {
    order decides, and a `display: none` written afterwards wins everywhere. */
 .nav-chip--projects { display: none; }
 
+/* No pointer-events here: these used to sit in the footer, which is
+   pointer-events: none, so they had to opt back in. In #endActions the
+   container owns that — and must, or the closed menu would still be
+   tappable in the top-right corner. */
 .end-social {
   display: none;
   align-items: center;
   gap: 2px;
-  pointer-events: auto;
 }
 
 .end-social .nav-icon { width: 30px; height: 30px; }
@@ -2903,10 +2956,10 @@ html.perf-low .prose {
      so a 100vh column has its last line permanently under the chrome. */
   .track { height: 100svh; }
 
-  /* Top padding clears the nav *and* the actions row pinned under it, so
-     "hello hello!" starts below both rather than behind them. */
+  /* Clears the nav and nothing else — the ramblings and the photos are
+     behind the "more" button now, so they cost the story no height. */
   .viewport {
-    padding: calc(104px + env(safe-area-inset-top)) 20px 72px;
+    padding: calc(84px + env(safe-area-inset-top)) 20px 62px;
     align-items: flex-start;
   }
 
@@ -2914,10 +2967,17 @@ html.perf-low .prose {
      min-width:auto stops it shrinking below its content, so an unbounded
      max-width let the lines run off the right edge instead of wrapping. */
   .prose {
-    /* 15% down from 17px: the story is one paragraph sized to the screen it
-       is read on, and at 17px the last lines sat under the footer on a
-       390x844 phone once the actions row took a slice off the top. */
-    font-size: 14.5px;
+    /* 14.5px is 15% down from the 17px this was, and the ceiling here. The
+       floor matters just as much: the story is one paragraph that has to
+       fit one screen without scrolling, and "one screen" is 844px on a
+       14 Pro Max, 667px on an SE and 640px on a budget Android. Sizing off
+       svh rather than a constant is what lets the short ones fit it too —
+       1.72svh holds the 14.5 cap from about 840px up and eases to the 11px
+       floor at 640. svh, not vh: vh is the tall viewport, the one you only
+       get once iOS has collapsed its URL bar, so sizing to it would spill
+       the last lines behind the bar on arrival — the same reason .track is
+       100svh above. */
+    font-size: clamp(11px, 1.72svh, 14.5px);
     line-height: 1.65;
     max-width: 100%;
     min-width: 0;
@@ -2926,11 +2986,17 @@ html.perf-low .prose {
   /* Six controls in a space-between row do not fit 390px. The social links
      move to the footer, which has room and is where they read as a sign-off
      rather than competing with the two things you actually do here. */
+  /* The "more" button is a sixth thing in this row and 390px was already
+     spoken for — the wordmark and the work chip were touching. The gap and
+     the side padding pay for it; the wordmark keeps its size, being the one
+     thing here that isn't a control. */
   .nav {
-    padding: calc(14px + env(safe-area-inset-top)) 18px 14px;
+    padding: calc(14px + env(safe-area-inset-top)) 16px 14px;
   }
 
   .nav-logo { font-size: 18px; }
+
+  .nav-right { gap: 8px; }
 
   .nav-right > .nav-icon { display: none; }
 
@@ -2952,79 +3018,102 @@ html.perf-low .prose {
     font-size: 14px;
   }
 
-  /* ---- the actions row, moved to the top ------------------------
+  .nav-menu-btn { display: inline-flex; }
+
+  /* ---- the actions row becomes the "more" dropdown ---------------
      On desktop these two buttons are the reward for finishing the read, so
      they rise off the bottom of the screen as the last words land. On a
      phone that meant the only route to the ramblings and the photos was a
-     full scroll of the story, every time. Here the row is pinned under the
-     nav and lit from the first frame instead — same two buttons, plus the
-     social links, centred on one line above "hello hello!".
+     full scroll of the story, every time — and standing them in a row under
+     the nav instead just moved the problem, because a row that is always
+     there is a row the story never gets back.
 
-     The !important on all three is deliberate: panels.js writes opacity,
-     transform and pointer-events as *inline* styles every frame from the
-     reading progress, and inline styles outrank a plain rule. panels.js
-     also stops writing them below 720px (see pinTop there), but these keep
-     the row visible through the frames before that decision is made and
-     through a desktop-to-phone resize. */
+     So it's the same element, folded into a card under the "more" button:
+     nothing of the screen is spent until it's asked for. No second copy of
+     the buttons anywhere — this *is* #endActions, which is why the click
+     handlers, the icon spin and the section hand-off all still apply.
+
+     The !important is against panels.js, which writes opacity, transform
+     and pointer-events as *inline* styles from the reading progress; inline
+     styles outrank a plain rule. panels.js stops writing them below 720px
+     (see pinTop there), but these also cover the frames before that runs
+     and a desktop-to-phone resize. */
   .end-actions {
-    top: calc(58px + env(safe-area-inset-top));
+    top: calc(62px + env(safe-area-inset-top));
     bottom: auto;
-    left: 0;
-    right: 0;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-    gap: 6px;
-    padding: 0 12px;
+    left: auto;
+    right: 14px;
+    width: max-content;
+    min-width: 176px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    padding: 8px;
+    border-radius: 16px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: var(--bg);
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.16);
+    /* out of the corner it belongs to, rather than out of its own middle */
+    transform-origin: 100% 0;
+    opacity: 0 !important;
+    transform: translateY(-6px) scale(0.96) !important;
+    pointer-events: none !important;
+    transition: opacity 200ms ease,
+                transform 380ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  [data-theme="dark"] .end-actions {
+    border-color: rgba(255, 255, 255, 0.14);
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5);
+  }
+
+  .end-actions.is-menu-open {
     opacity: 1 !important;
     transform: none !important;
-    /* The row is full-bleed so its contents can centre against the screen
-       rather than against each other, which leaves dead space either side of
-       the buttons — and the story is dragged, not scrolled, so a band of that
-       space taking the touch would be a 30px stripe under the nav where the
-       page won't move. The controls opt back in individually below. */
-    pointer-events: none !important;
-    /* Only here. On desktop the opacity is written per frame from the
-       reading progress and a transition would lag behind the scroll, which
-       is why the base rule has none. */
-    transition: opacity 800ms ease 150ms;
+    pointer-events: auto !important;
   }
 
-  /* Three controls and two chips on one 390px line: the chips lose the
-     desktop's roomy padding and drop a point of type, which is what buys
-     the social links a place in the row rather than a second one. */
+  /* Inside a card they're rows, not chips: the card already draws the
+     outline, so a border on each item would be an outline inside an
+     outline. */
   .end-action {
-    justify-content: center;
-    font-size: 11px;
-    gap: 6px;
-    padding: 8px 11px;
-    border-radius: 18px;
-    pointer-events: auto;
+    justify-content: flex-start;
+    font-size: 13.5px;
+    gap: 10px;
+    padding: 11px 12px;
+    border: none;
+    border-radius: 10px;
+    -webkit-tap-highlight-color: transparent;
   }
 
-  .end-action svg { width: 12px; height: 12px; }
+  .end-action svg { width: 14px; height: 14px; }
 
-  /* the social links, rehoused out of the nav and into that same row */
-  .end-social { display: flex; }
-  .end-social .nav-icon { width: 28px; height: 28px; }
-  .end-social .nav-icon svg { width: 15px; height: 15px; }
+  .end-action:active { background: rgba(0, 0, 0, 0.06); }
 
-  /* The row is chrome now, not content, so it leaves with the rest of the
-     chrome when a section opens — without this it stayed lit under the
-     panel's own topbar during the 880ms the panel takes to arrive. */
+  [data-theme="dark"] .end-action:active { background: rgba(255, 255, 255, 0.08); }
+
+  /* the social links, rehoused out of the nav and along the foot of the
+     card, where they read as the sign-off they were in the footer */
+  .end-social {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 4px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+  }
+
+  [data-theme="dark"] .end-social { border-top-color: rgba(255, 255, 255, 0.1); }
+
+  /* The menu is chrome, so it leaves with the rest of it when a section
+     opens. panels.js closes it on the way in as well — this is what covers
+     the frames before that lands, and the resume panel, which opens without
+     going through openSection. */
   html.is-sectioned .end-actions {
     opacity: 0 !important;
-    transform: translateY(-3vh) !important;
-    transition: transform 880ms cubic-bezier(0.22, 1, 0.24, 1),
-                opacity 420ms ease;
+    pointer-events: none !important;
+    transform: translateY(-6px) scale(0.96) !important;
   }
-
-  /* The controls, not just their row: the panel slides up from the bottom
-     over 880ms, so for most of that the top of the screen is still uncovered
-     and these would be invisible but tappable. */
-  html.is-sectioned .end-action,
-  html.is-sectioned .end-social { pointer-events: none; }
 
   .proj-row { grid-template-columns: 56px 1fr; gap: 14px; padding: 17px 2px; }
   .proj-art { height: 46px; }
@@ -3107,21 +3196,23 @@ html.perf-low .prose {
   .blog-article-meta + p::first-letter { font-size: 34px; }
 }
 
-/* ---- the last narrow phones ------------------------------------
-   Five controls on one 320px line is not a fit anyone wins: the two labels
-   alone are most of the width. The row is allowed to wrap there — the
-   social links drop to a second line under the buttons — and the only thing
-   that has to change is where the story starts, or the first line would be
-   sitting behind them. */
-@media (max-width: 360px) {
-  .viewport { padding-top: calc(140px + env(safe-area-inset-top)); }
-  .end-action { padding: 8px 10px; }
-  /* the second row costs the story about three lines; this buys them back */
-  .prose { font-size: 13.5px; }
-  /* at 320px the wordmark and the work chip meet in the middle */
+/* ---- the narrower phones ---------------------------------------
+   The "more" button is a sixth control in the nav, and the five that were
+   already there had used the row up — at 375px the wordmark and the work
+   chip come within three pixels of each other, and below that they meet.
+   Everything in the row gives up a few pixels rather than any one control
+   being dropped. 380 rather than 360 as the line: a 390pt phone has the
+   room and a 375pt one does not. */
+@media (max-width: 380px) {
+  .nav { padding: calc(14px + env(safe-area-inset-top)) 12px 14px; }
+  .nav-right { gap: 6px; }
   .nav-logo { font-size: 16px; }
-  .nav { padding: calc(14px + env(safe-area-inset-top)) 14px 14px; }
-  .nav-right { gap: 8px; }
+  .nav-chip { font-size: 10px; padding: 6px 10px; height: 28px; }
+  .nav-menu-btn { width: 30px; height: 30px; }
+  .theme-toggle { width: 30px; height: 30px; }
+  .now-playing { height: 28px; }
+  .spotify-logo { padding: 6px; }
+  .end-actions { right: 12px; }
 }
 
 /* ---- touch hardening -------------------------------------------

@@ -63,6 +63,14 @@
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
+      <!-- Phones only, like the work chip beside it: the ramblings, the
+           photos and the social links don't fit anywhere on a 390px screen
+           without taking a bite out of the story, so they fold into the
+           dropdown this opens. #endActions *is* that dropdown — same two
+           buttons the desktop raises at the end of the read, restyled. -->
+      <button class="nav-menu-btn" id="menuBtn" aria-label="More" aria-expanded="false" aria-controls="endActions">
+        <span class="nav-menu-bars" aria-hidden="true"><span></span><span></span><span></span></span>
+      </button>
     </div>
   </header>
 

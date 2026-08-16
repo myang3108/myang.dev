@@ -139,6 +139,7 @@
        same either way (see wake). */
     if (key === 'gallery') carousel.wake();
     // hand off from whatever else is showing — one surface at a time
+    setMenu(false); // the phone's "more" card, if the tap came from inside it
     if (window.closeResumePanel) window.closeResumePanel();
     if (window.sphereRecede) window.sphereRecede(true);
     root.classList.add('is-sectioned');
@@ -204,6 +205,7 @@
      side, the inline styles have to go or the row stays frozen at whatever
      opacity the last frame wrote. */
   const phone = window.matchMedia('(max-width: 720px)');
+  const menuBtn = document.getElementById('menuBtn');
   let pinned = false;
 
   function pinTop() {
@@ -214,12 +216,50 @@
     endActions.style.opacity = '';
     endActions.style.transform = '';
     endActions.style.pointerEvents = '';
-    endActions.setAttribute('aria-hidden', 'false');
+    setMenu(false);
   }
 
   function unpinTop() {
     pinned = false;
+    setMenu(false);
   }
+
+  /* aria-hidden tracks the card rather than the reading progress here: shut,
+     the menu is as absent to a screen reader as it is to a thumb. */
+  function setMenu(open) {
+    endActions.classList.toggle('is-menu-open', open);
+    menuBtn.classList.toggle('is-open', open);
+    menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    endActions.setAttribute('aria-hidden', open ? 'false' : 'true');
+  }
+
+  function menuIsOpen() {
+    return endActions.classList.contains('is-menu-open');
+  }
+
+  /* pointerdown, not click: the story is dragged, and a drag that starts on
+     the page behind an open menu should dismiss it as it begins rather than
+     leave it hanging over the words for the length of the gesture.
+
+     The button's own handler stops the event here, so opening the menu isn't
+     also the outside-tap that closes it. */
+  menuBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+  menuBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    setMenu(!menuIsOpen());
+  });
+
+  document.addEventListener('pointerdown', (e) => {
+    if (!menuIsOpen()) return;
+    if (endActions.contains(e.target)) return;
+    setMenu(false);
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || !menuIsOpen()) return;
+    setMenu(false);
+    menuBtn.focus();
+  });
 
   if (phone.matches) pinTop();
   phone.addEventListener('change', (e) => (e.matches ? pinTop() : unpinTop()));
@@ -259,7 +299,10 @@
      animates in — otherwise it'd open underneath a section that sits above
      it. The desk needs no equivalent: a section covers the whole viewport,
      and openSection already sends the desk away. */
-  document.getElementById('resumeBtn').addEventListener('click', closeSection);
+  document.getElementById('resumeBtn').addEventListener('click', () => {
+    closeSection();
+    setMenu(false);
+  });
 
   /* ---- ramblings: post list -------------------------------------- */
 
