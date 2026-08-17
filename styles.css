@@ -339,12 +339,7 @@ html.is-revealing .scroll-hint {
   box-sizing: content-box;
   color: var(--ink-soft);
   /* no filter in this list — nothing ever sets a filter on this element */
-  transition: color 400ms ease, transform 720ms cubic-bezier(0.16, 1, 0.3, 1);
-  transform-style: preserve-3d;
-}
-
-.now-playing:hover .spotify-logo {
-  transform: rotateY(360deg);
+  transition: color 400ms ease;
 }
 
 .now-playing:not(.is-idle) .spotify-logo {
