@@ -35,7 +35,7 @@ window.PROJECTS = {
     desc: '☩ a gened matchmaker for uiuc students — type the things you actually care about (“asian, culture, politics”) and get courses back instead of scrolling the catalog\n☩ pulled uiuc course datasets and RateMyProfessor data, then ranked matches with rake keyword extraction and cosine similarity\n☩ every result carries the description, average gpa, professor ratings, and links to the reddit threads people really decide from\n☩ next.js + react + tailwind front end over a flask/pandas backend; i built the ui',
     chips: ['TypeScript', 'Next.js', 'React', 'Tailwind', 'Flask', 'Python', 'Pandas', 'RAKE'],
     url: 'https://devpost.com/software/gened-ate',
-    icon: { id: 'deskGened', view: '139.5 111.5 88 88' },
+    icon: { id: 'deskGened', view: '136.5 110.75 86 86' },
   },
   towers: {
     name: 'research',

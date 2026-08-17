@@ -1821,7 +1821,7 @@ html.is-revealing .scroll-hint {
 
 @keyframes gened-sweep {
   0%, 10%   { transform: translate(0, 0); }
-  45%, 62%  { transform: translate(-32px, -28px); }
+  45%, 62%  { transform: translate(-26px, -22px); }
   95%, 100% { transform: translate(0, 0); }
 }
 
