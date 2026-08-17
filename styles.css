@@ -3012,7 +3012,7 @@ html.perf-low .prose {
 
   .track::before {
     top: 0;
-    height: calc(70px + env(safe-area-inset-top));
+    height: calc(104px + env(safe-area-inset-top));
     background: linear-gradient(to bottom, var(--bg) 72%, transparent);
   }
 
@@ -3024,13 +3024,16 @@ html.perf-low .prose {
 
   /* Clears the nav and nothing else — the ramblings and the photos are
      behind the "more" button now, so they cost the story no height. */
-  /* 70px is the 62px nav plus a hair; 60px at the foot clears the scroll cue
-     once that cue has moved down onto the footer (below). The sides are back
-     to a proper 20px — they were squeezed to 16 to win a few lines back, and
-     that stopped being the way to pay for type size the moment the story was
-     allowed to slide (see the read-head slide in main.js). */
+  /* 104px is the 62px nav plus a breath — the first line used to start
+     right on the nav's hem, which read as cramped rather than as the top of
+     a page; 60px at the foot clears the scroll cue once that cue has moved
+     down onto the footer (below). The sides are back to a proper 20px —
+     they were squeezed to 16 to win a few lines back, and that stopped
+     being the way to pay for type size the moment the story was allowed to
+     slide (see the read-head slide in main.js). Keep the ::before gradient
+     above in step with this number: it is the fade over exactly this gap. */
   .viewport {
-    padding: calc(70px + env(safe-area-inset-top)) 20px 60px;
+    padding: calc(104px + env(safe-area-inset-top)) 20px 60px;
     align-items: flex-start;
   }
 
@@ -3041,13 +3044,13 @@ html.perf-low .prose {
     /* Still a function of the screen's height rather than a constant, so a
        small phone gets a proportionate measure — but it is no longer the
        height that decides what *fits*, because the story slides now. Every
-       term is 10% up from the last pass; on a 16 in Safari (~745svh) this
-       lands around 16.2px.
+       term is another 10% up from the last pass; on a 16 in Safari
+       (~745svh) this lands around 17.9px.
 
        svh, not vh: vh is the *tall* viewport, the one you only get after
        iOS collapses its URL bar, so the first screenful would be sized for
        room that isn't there yet — the same reason .track is 100svh. */
-    font-size: clamp(13.9px, 2.18svh, 17.9px);
+    font-size: clamp(15.3px, 2.4svh, 19.7px);
     /* Back open to something close to desktop's rhythm. This was squeezed
        to 1.42 when every line had to fit one screen; sliding is what pays
        for the leading now. */
