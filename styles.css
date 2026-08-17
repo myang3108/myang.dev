@@ -36,6 +36,50 @@
   initial-value: 0;
 }
 
+/* ---- the theme colours, registered so the flip can be animated ----
+   These four are the whole light/dark palette, and every surface on the page
+   is some expression of them. Registering them as <color> is what makes a
+   theme change animatable *at the source*: an unregistered custom property
+   is a token stream, so it can only ever snap, and each consumer had to
+   carry its own transition to hide that — which is precisely why the flip
+   used to arrive in pieces. body eased over 400ms, the phone's fade strips
+   were gradients and couldn't ease at all, the panels had no transition and
+   snapped, and the story's words snapped too, because both ends of their
+   colour-mix are these variables.
+
+   Animating the variables instead means there is one fade and everything is
+   downstream of it. Nothing needs to opt in, including the words: their mix
+   re-resolves each frame from the interpolating --ink, while --w keeps being
+   written by the read-head on the same frame, untouched. That's the part a
+   transition on .word could never do — a per-frame --w write would restart
+   the colour interpolation every frame and drag the sweep behind the head.
+
+   inherits: true, unlike --w and --logo-fill: these are read all over the
+   tree from a single declaration on :root, which is the whole point. */
+@property --bg {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #f4f2ee;
+}
+
+@property --ink {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #232323;
+}
+
+@property --ink-dim {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: rgba(35, 35, 35, 0.063);
+}
+
+@property --ink-soft {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: rgba(35, 35, 35, 0.45);
+}
+
 :root {
   --bg: #f4f2ee;
   --ink: #232323;
@@ -43,6 +87,18 @@
   --ink-soft: rgba(35, 35, 35, 0.45);
   --accent: #ff4d00;
   --word-fade: 500ms;
+}
+
+/* The fade itself, and the only place it is declared. Held by the theme
+   toggle in index.html for exactly its duration, rather than left standing
+   on :root — the boot script sets data-theme while the document is still
+   parsing, and a standing transition would make a dark-mode visitor watch
+   the page fade in from light on every load. */
+html.is-theme-switching {
+  transition: --bg 400ms ease,
+              --ink 400ms ease,
+              --ink-dim 400ms ease,
+              --ink-soft 400ms ease;
 }
 
 * { box-sizing: border-box; }
@@ -57,7 +113,10 @@ html, body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
-  transition: background-color 400ms ease, color 400ms ease;
+  /* No background-color/color transition here on purpose: --bg and --ink are
+     already interpolating during a flip (see @property above), so easing the
+     resolved colour on top of an easing value would make this one surface
+     lag everything that just reads the variable straight. */
 }
 
 /* The intro loader that used to sit here — the glyph-matrix "myang.dev" start
@@ -3000,6 +3059,14 @@ html.perf-low .prose {
      those repaints. These are two static strips the compositor can leave
      alone. Their heights are exactly the viewport's padding, so each fade
      ends where the text's own box begins and no live line is ever dimmed. */
+  /* These stay gradients through a theme flip, which they could not do when
+     --bg was an ordinary custom property: a gradient is a background image
+     and an image does not interpolate, so the strips snapped to the new
+     theme while the page behind them eased, and you got two bands of the
+     outgoing colour framing the story for the length of the fade. Now that
+     --bg is registered and animates, the gradient is simply re-resolved each
+     frame from a colour that is already mid-fade — nothing to declare here,
+     and no transition of their own to keep in step with anyone else's. */
   .track::before,
   .track::after {
     content: "";

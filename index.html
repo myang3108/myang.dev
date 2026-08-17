@@ -609,9 +609,29 @@
       window.closeResumePanel();
     });
 
+    let themeSwitchTimer;
     document.getElementById('themeToggle').addEventListener('click', () => {
       const html = document.documentElement;
       const isDark = html.getAttribute('data-theme') === 'dark';
+
+      /* Turns on the theme fade for the length of one flip — the class is
+         what carries the transition on the --bg/--ink variables themselves,
+         so the whole page crosses over together. It has to go on before the
+         attribute below, so the transition is present in the style the
+         change is resolved against.
+
+         Only ever on for the flip, and never at load: the boot script sets
+         data-theme while the document is still parsing, and a standing
+         transition would mean a dark-mode visitor watches the page fade in
+         from light every time. 420ms is the 400ms fade plus a frame; the
+         clearTimeout is so a fast double-toggle doesn't have the first
+         timer strip the class out from under the second. */
+      html.classList.add('is-theme-switching');
+      clearTimeout(themeSwitchTimer);
+      themeSwitchTimer = setTimeout(() => {
+        html.classList.remove('is-theme-switching');
+      }, 420);
+
       if (isDark) {
         html.removeAttribute('data-theme');
         localStorage.setItem('theme', 'light');
