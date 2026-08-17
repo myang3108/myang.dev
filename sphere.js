@@ -40,7 +40,7 @@
   const template = document.getElementById("deskTemplate");
   const SVG_NS = "http://www.w3.org/2000/svg";
 
-  /* Nine tiles, so each one can be big: this is a constellation of objects
+  /* Eleven tiles, so each one can be big: this is a constellation of objects
      you're meant to pick from, not a dense volume you look at. */
   const COUNT = PROJECT_KEYS.length;
   /* Tile edge in px at unit depth. Bigger than the drawings look, because
@@ -568,7 +568,7 @@
       returnPending = false;
       /* Catch the tiles up to where the drift got to while they were frozen,
          then start the fade on the *next* frame. Unfreezing and fading in
-         together put nine transform writes and the re-raster of nine dormant
+         together put eleven transform writes and the re-raster of eleven dormant
          tiles into the first frame of the fade, which is the stutter. */
       if (!opened && !returning) frozen = false;
       render();

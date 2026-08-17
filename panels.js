@@ -389,7 +389,7 @@
   document.getElementById('blogBack').addEventListener('click', closeArticle);
 
   /* ---- work: the projects, for viewports with no globe --------------
-     Below 1500px .sphere is display:none, which removed all nine projects,
+     Below 1500px .sphere is display:none, which removed all eleven projects,
      their drawings and their cards from the page with no other route to
      them. This is that route.
 
@@ -400,7 +400,7 @@
      viewBox authored in projects.js. Same source of truth, so a change to
      a drawing shows up in both places.
 
-     Rows are built once, lazily, on first open — nine SVG clones is not
+     Rows are built once, lazily, on first open — eleven SVG clones is not
      work worth doing at startup for a panel most visits never open. */
 
   const PROJECTS = window.PROJECTS || {};

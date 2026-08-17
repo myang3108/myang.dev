@@ -227,6 +227,25 @@
             <rect class="desk-hit" x="26" y="122" width="64" height="88" fill="transparent"/>
           </g>
 
+          <!-- course card + magnifier: (gened)ate (mid-left of centre, in the
+               gap between the phone and the scanner) -->
+          <g class="desk-item" id="deskGened" data-project="genedate" tabindex="0" transform="translate(-4 2) rotate(-3 183 155)">
+            <!-- a second card peeking out behind: a catalog, not one class -->
+            <rect x="158" y="122" width="52" height="40" rx="4" stroke="currentColor" stroke-width="1.6" fill="var(--bg)" opacity="0.55"/>
+            <rect x="150" y="132" width="56" height="44" rx="4" stroke="currentColor" stroke-width="2.5" fill="var(--bg)"/>
+            <!-- the match on top, then two plain result lines under it -->
+            <line class="gened-line" x1="158" y1="143" x2="186" y2="143" stroke="#E84A27" stroke-width="2.2" stroke-linecap="round"/>
+            <line class="gened-line gened-line2" x1="158" y1="152" x2="196" y2="152" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity="0.45"/>
+            <line class="gened-line gened-line3" x1="158" y1="161" x2="178" y2="161" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity="0.45"/>
+            <!-- magnifier sweeping the card -->
+            <g class="gened-lens">
+              <circle cx="200" cy="172" r="12" stroke="currentColor" stroke-width="2.5" fill="var(--bg)" fill-opacity="0.85"/>
+              <circle cx="200" cy="172" r="7" stroke="#13294B" stroke-width="1.2" opacity="0.45" fill="none"/>
+              <line x1="208.5" y1="180.5" x2="216" y2="188" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+            </g>
+            <rect class="desk-hit" x="140" y="112" width="88" height="88" fill="transparent"/>
+          </g>
+
           <!-- SPECT scanner model: mh3d (center) -->
           <g class="desk-item" id="deskScanner" data-project="scanner" tabindex="0" transform="rotate(3 260 152)">
             <rect x="244" y="120" width="32" height="64" rx="4" stroke="currentColor" stroke-width="1.8" fill="var(--bg)"/>
@@ -348,7 +367,7 @@
 
   <aside class="resume-panel" id="resumePanel">
     <div class="resume-topbar">
-      <a class="resume-download" href="/resume.pdf" target="_blank" rel="noopener noreferrer">
+      <a class="resume-download" href="/MYang27.pdf" target="_blank" rel="noopener noreferrer">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -378,30 +397,31 @@
               <em>B.S. Computer Engineering</em>
               <span>3.65 GPA</span>
             </div>
-            <p>Coursework: Data Structures, Algorithms, Operating Systems, Artificial Intelligence, Applied Machine Learning, Data Mining, Distributed Systems, Database Systems, Computer Networks, Digital Systems Labratory</p>
+            <p>Coursework: Data Structures, Algorithms, Operating Systems, Artificial Intelligence, Applied Machine Learning, Data Mining, Database Systems, Computer Networks, Distributed Systems, Computer Architecture</p>
           </div>
         </section>
 
         <section class="resume-section resume-section--exp">
           <h2>Experience</h2>
           <div class="resume-entry">
-            <div class="resume-entry-head"><strong>Amazon</strong><span>May 2026 – Present</span></div>
+            <div class="resume-entry-head"><strong>Amazon</strong><span>May – Aug 2026</span></div>
             <div class="resume-entry-sub"><em>Software Development Engineering Intern</em><span>San Diego, CA</span></div>
             <ul>
-              <li>Building a customer-behavior knowledge graph based recommendation engine on Amazon Neptune, joining user personas, order history, and semantic product IDs into 750M weighted relationships for openCypher traversal</li>
-              <li>Served queries through AWS Lambda and API Gateway, achieving sub-second traversal latency for 10M customers</li>
-              <li>Derived and scored 50M+ buyer-affinity edges for product recommendations with a Wilson lift metric, mitigating small-sample false positives and enabling deterministic graph rebuilds</li>
-              <li>Exposing the system as an MCP server, wrapping graph endpoint tools and chained prompt workflows for natural-language graph traversal and explainability</li>
+              <li>Created an Amazon Neptune knowledge graph recommendation system with over 750 million entities connecting 10M customers, 4,096 sparse-autoencoder generated behavioral personas, and a four-level Semantic-ID hierarchy</li>
+              <li>Built 11 REST endpoints using API Gateway and Lambda with parameterized openCypher queries, achieving 56 ms p50 and 138 ms p95 latency, while adding server-side batching to reduce response times by 82%</li>
+              <li>Designed a weekly blue/green batch rebuild using Cradle, SageMaker Processing, Step Functions, Lambda, and Neptune; implemented the processing pipeline and SigV4 snapshot/reset/bulk-load/validation control plane</li>
+              <li>Made an RQ-VAE's machine-learned product groupings interpretable by supplying purchase-weighted taxonomy data and ASIN details for a Bedrock agent to label behavioral subcategories with 100% coverage</li>
+              <li>Wrapped graph endpoint tools and chained prompt workflows into an MCP server for natural-language queries</li>
             </ul>
           </div>
           <div class="resume-entry">
             <div class="resume-entry-head"><strong>Amazon</strong><span>May – Aug 2025</span></div>
             <div class="resume-entry-sub"><em>Software Development Engineering Intern</em><span>San Diego, CA</span></div>
             <ul>
-              <li>Built a scalable CI/CD pipeline to automate batch vector embedding generation for 100M-parameter Foundational Behavioral Model training, reducing runtime by 35% and compute costs by 10%</li>
-              <li>Developed a serverless ML workflow with AWS Lambda, Step Functions, S3, and SageMaker, enabling analysis of payment fraud and backfill datasets across 150M+ daily customer orders, views, and searches</li>
+              <li>Built a scalable CI/CD pipeline to automate batch vector embedding generation for 100M-parameter Foundational Behavioral Model training, reducing runtime by 35% and compute costs by 10% while maintaining 99.5% accuracy</li>
+              <li>Developed a serverless ML workflow with AWS Lambda, Step Functions, S3, and SageMaker, enabling Applied Scientists to analyze payment fraud and backfill datasets across 150M+ daily customer orders, views, and searches</li>
               <li>Optimized real-time TrafficStream Dataset queries by 15% through distributed customer group hashing in PySpark</li>
-              <li>Integrated internal MCP Server with Claude 4.0 Sonnet LLM for context-aware reasoning in an agentic shopping assistant prototype</li>
+              <li>Helped integrate an internal agent using Strands with custom case retrieval and order lookup tools to enhance context-aware reasoning in a fraud investigation assistant prototype, while also creating evaluation metrics</li>
             </ul>
           </div>
           <div class="resume-entry">
@@ -410,7 +430,7 @@
             <ul>
               <li>Architected an MCP server integrating a vector database and tool-calling endpoints, enabling AI agents to automate simulation execution, extract seismic data, and retrieve domain protocols</li>
               <li>Engineered an ML inference pipeline integrating external Geolocation REST APIs, XGBoost models, and a randomized greedy optimizer to design multi-objective steel structures, achieving >90% validation accuracy</li>
-              <li>Awarded Illinois Scholars Undergraduate Research Scholarship (1 of 20), selected for the PURE program (1 of 40), and won Best Audience Choice Award at the Undergraduate Research Symposium</li>
+              <li>Awarded Illinois Scholars Undergraduate Research Scholarship (1 of 20), selected for the PURE program (1 of 40), and won Best Audience Choice Award at the Undergraduate Research Symposium among 100+ projects</li>
             </ul>
           </div>
           <div class="resume-entry">
@@ -438,6 +458,7 @@
           <p><strong>Languages:</strong> C, C#, C++, Python, Java, SQL, JavaScript, TypeScript, Swift, RISC-V Assembly</p>
           <p><strong>Frameworks:</strong> React, Node.js, Flask, .NET Framework, Pandas, NumPy, OpenSeesPy, PySpark</p>
           <p><strong>Cloud & Tools:</strong> Git, Docker, AWS (S3, EC2, ECS/Fargate, RDS, Lambda, SageMaker, SNS/SQS, Step Functions)</p>
+          <p><strong>Certifications:</strong> AWS Certified AI Practitioner, AWS Certified Cloud Practitioner</p>
         </section>
       </div>
 

@@ -1812,6 +1812,32 @@ html.is-revealing .scroll-hint {
   50%      { opacity: 0.65; }
 }
 
+/* gened: the magnifier sweeps up the card and the matching line lands under
+   it — the search, then the hit. The lines are timed to the sweep, not to
+   each other, which is why the delays aren't evenly spaced. */
+.gened-lens {
+  animation: gened-sweep 5.2s ease-in-out infinite;
+}
+
+@keyframes gened-sweep {
+  0%, 10%   { transform: translate(0, 0); }
+  45%, 62%  { transform: translate(-32px, -28px); }
+  95%, 100% { transform: translate(0, 0); }
+}
+
+.gened-line {
+  animation: gened-hit 5.2s ease-in-out infinite;
+}
+
+.gened-line2 { animation-delay: 260ms; }
+.gened-line3 { animation-delay: 420ms; }
+
+@keyframes gened-hit {
+  0%, 40%   { opacity: 0.2; }
+  55%, 78%  { opacity: 1; }
+  92%, 100% { opacity: 0.2; }
+}
+
 /* towers: windows twinkle at night */
 .tower-light {
   animation: window-twinkle 3.2s ease-in-out infinite;
