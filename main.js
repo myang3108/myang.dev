@@ -266,18 +266,46 @@ PARAGRAPHS.forEach((paragraph, pIndex) => {
 
 /* ---- hand over the entrance ----
    The document ships with .is-booting on <html> so the chrome is clear and
-   slightly offset at first paint (styles.css). The paragraph above is the
-   only thing worth waiting for — dropping the class any earlier reveals a
-   viewport that is about to have 163 words dropped into it.
+   slightly offset at first paint (styles.css); this is where it comes off.
 
-   Two frames rather than one: the first lets the paragraph lay out, the
-   second makes the class removal a change the compositor can animate
-   instead of folding it into the same frame that built the text. */
-requestAnimationFrame(() => {
+   The wait is DOMContentLoaded, not this line, and that is the whole reason
+   the fade is smooth. This file is the third of five scripts: spotify.js and
+   panels.js run straight after it, synchronously, and panels.js builds every
+   full-screen section. Starting the transition here meant its opening frames
+   were competing with that work, which is exactly when a fade can least
+   afford to drop one. By DOMContentLoaded all five have finished and the
+   main thread is idle, so the animation gets clean frames from the start.
+
+   Two more frames after that: the first lets the paragraph lay out, the
+   second makes the class swap a change the compositor animates rather than
+   one folded into the same frame that laid it out. */
+function startEntrance() {
+  const root = document.documentElement;
   requestAnimationFrame(() => {
-    document.documentElement.classList.remove("is-booting");
+    requestAnimationFrame(() => {
+      /* Added in the same frame the other comes off — .is-revealing carries
+         the entrance timing, so it has to be on the element for the frame
+         the transition is generated from. */
+      root.classList.add("is-revealing");
+      root.classList.remove("is-booting");
+
+      /* Nothing should be left holding will-change once the page is idle: a
+         pinned layer on the story is exactly what the .prose comment warns
+         about, since the read-head sweep repaints those words constantly.
+         Has to outlast the longest leg in styles.css — the footer's 420ms
+         delay plus its 1250ms transform, and the cue's 720ms + 1000ms.
+         Rounded up past both; dropping it early would strand a layer
+         mid-transition, which is the jank this class exists to avoid. */
+      setTimeout(() => root.classList.remove("is-revealing"), 1900);
+    });
   });
-});
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", startEntrance, { once: true });
+} else {
+  startEntrance();
+}
 
 const totalWords = activatable.length;
 const maxScroll = (totalWords + TAIL_WORDS) * SCROLL_PER_WORD;

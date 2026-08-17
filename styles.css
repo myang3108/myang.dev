@@ -139,10 +139,9 @@ html, body {
 /* ---- first paint ------------------------------------------------
    The loader is gone but the page still shouldn't snap into place: the
    chrome starts a few pixels off and clear, and main.js drops .is-booting
-   once the words are laid out, which hands the reveal straight to the
-   transitions above. Nothing here costs a frame — opacity and transform
-   only, both compositor properties, no blur or filter — so it is a fade,
-   not a load screen, and there is no wait in front of it.
+   once the story is laid out and every other script has run. Opacity and
+   transform only, both compositor properties, no blur or filter — so it is
+   a fade, not a load screen, and there is no wait in front of it.
 
    .is-booting lives on <html> in the markup rather than being set by a
    script, because anything a script adds lands after first paint and the
@@ -155,15 +154,76 @@ html.is-booting .scroll-hint {
 }
 
 /* The offsets read as one gesture: the story rises, the chrome closes in on
-   it from the top and bottom edges. The globe is not in this list — it runs
-   its own entrance in sphere.js and always did. */
+   it from the top and bottom edges. Scaled to the durations below — over a
+   slow move a very short travel reads as creeping rather than gliding, so
+   these went up when the timing did. */
 html.is-booting .track   { transform: translateY(14px); }
-html.is-booting .nav     { transform: translateY(-10px); }
-html.is-booting .footer  { transform: translateY(10px); }
+html.is-booting .nav     { transform: translateY(-11px); }
+html.is-booting .footer  { transform: translateY(11px); }
 
 /* hint-bob is an infinite transform on a fixed element; no reason to have it
    ticking under an invisible cue. */
 html.is-booting .scroll-hint { animation: none; }
+
+/* The globe joins the same gate. sphere.js reveals it on a timer of its own
+   that starts when its script runs — earlier than this — so without being
+   pinned here it could arrive on screen ahead of the story it belongs to.
+   Both properties are held, not just opacity, so the drift in from 0.94
+   still happens rather than being spent while invisible. Its own
+   .is-entering survives the wait: sphere.js drops that class on the opacity
+   transitionend, which cannot fire while the value is pinned. */
+html.is-booting .sphere {
+  opacity: 0;
+  transform: scale(0.94);
+}
+
+/* ---- the reveal itself ------------------------------------------
+   .is-revealing is added in the same frame .is-booting comes off, so these
+   are the transitions the browser actually runs — the base rules above stay
+   as they are for the section retreat, which wants different timing.
+
+   One easing throughout (a decelerating ease-out that covers most of the
+   distance early and settles slowly), staggered by delay rather than by
+   duration so everything lands on the same curve. will-change is declared
+   on both the booting and revealing states so the layers exist before the
+   first animated frame instead of being promoted during it — that promotion
+   mid-transition is what makes a fade hitch on its first few frames. */
+html.is-booting .nav,
+html.is-booting .track,
+html.is-booting .footer,
+html.is-booting .sphere,
+html.is-revealing .nav,
+html.is-revealing .track,
+html.is-revealing .footer,
+html.is-revealing .sphere {
+  will-change: opacity, transform;
+}
+
+/* Transform runs longer than opacity on each element on purpose: the fade
+   finishes while the element is still easing the last couple of pixels into
+   place, so it arrives settling rather than stopping. */
+html.is-revealing .track {
+  transition: opacity 1000ms cubic-bezier(0.22, 1, 0.36, 1),
+              transform 1250ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html.is-revealing .nav {
+  transition: opacity 1000ms cubic-bezier(0.22, 1, 0.36, 1) 260ms,
+              transform 1250ms cubic-bezier(0.22, 1, 0.36, 1) 260ms;
+}
+
+html.is-revealing .footer {
+  transition: opacity 1000ms cubic-bezier(0.22, 1, 0.36, 1) 420ms,
+              transform 1250ms cubic-bezier(0.22, 1, 0.36, 1) 420ms;
+}
+
+/* The cue is the last thing to arrive — it is an instruction, and it means
+   more once there is something on screen to act on. Scoped to the reveal so
+   the delay doesn't also apply to .is-hidden, which has to fade the moment
+   the reader starts scrolling. */
+html.is-revealing .scroll-hint {
+  transition: opacity 1000ms cubic-bezier(0.22, 1, 0.36, 1) 720ms;
+}
 
 /* ---- chrome ---------------------------------------------------- */
 
