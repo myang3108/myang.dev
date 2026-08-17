@@ -85,6 +85,14 @@ window.PROJECTS = {
     url: 'https://github.com/myang3108',
     icon: { id: 'deskCPU', view: '392.5 110.5 95 95' },
   },
+  brain: {
+    name: 'braincells',
+    date: '2026',
+    desc: '☩ designed an agentic tutoring harness that runs inside Claude Code — a closed teach-test-remediate loop that refuses to advance until you can prove you understand the material\n☩ authored a teaching contract plus three skills (/learn, /grill-gate, /add-resources) driving intake → adaptive diagnostic → approved roadmap → per-unit teach loop → cumulative final exam weighted toward weak spots\n☩ gated every unit at ~85% on generative assessment only — teach-backs with novel analogies, unseen transfer problems, edge-case prediction — never recall or multiple choice\n☩ built remediation that names the exact misconception, logs it, and reteaches from a different angle (new analogy → concrete numbers → diagram → code) with fresh questions\n☩ made the harness fully file-backed and resumable: per-topic state, roadmaps, quiz logs, and a learner profile that accumulates which explanations land, so topics bridge into each other and sessions pick up mid-roadmap',
+    chips: ['Claude Code', 'Agent Design', 'Skills', 'Context Engineering'],
+    url: 'https://github.com/myang3108/StopLosingBraincellsToAI',
+    icon: { id: 'deskBrain', view: '292 101 102 102' },
+  },
   laptop: {
     name: 'everything else',
     date: 'ongoing',

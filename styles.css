@@ -60,30 +60,10 @@ html, body {
   transition: background-color 400ms ease, color 400ms ease;
 }
 
-/* ---- intro loader ---------------------------------------------- */
-
-.loader {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  background: var(--bg);
-  display: grid;
-  place-items: center;
-  pointer-events: none;
-}
-
-.loader canvas {
-  display: block;
-}
-
-/* hold the page still (and hide the chrome) while the loader runs, so
-   nothing pops in behind the wordmark */
-html.is-loading .nav,
-html.is-loading .footer,
-html.is-loading .scroll-hint,
-html.is-loading .track {
-  opacity: 0;
-}
+/* The intro loader that used to sit here — the glyph-matrix "myang.dev" start
+   screen — is in archive/ along with a note on restoring it. The transitions
+   just below were its reveal choreography, and are kept because they're
+   ordinary element transitions that still apply. */
 
 .nav {
   transition: opacity 800ms ease 150ms;
@@ -1718,6 +1698,49 @@ html.is-loading .track {
   to   { stroke-dashoffset: 0; }
 }
 
+/* brain: the folds shimmer — each gyrus brightens in turn, and a pink charge
+   runs the length of five of them, so the light reads as travelling through
+   the cortex rather than the whole drawing pulsing at once.
+
+   Both halves are built to survive .sphere.is-quiet, which greyscales the
+   whole globe: hue is gone there, so the shimmer has to be carried by
+   luminance and stroke weight instead. That's why the folds swing across
+   almost the full opacity range (the tower-light trick) and why the charge is
+   nearly twice the width of the fold it rides — a same-weight dash in an
+   accent colour is invisible the moment the colour is taken away. */
+.brain-fold {
+  opacity: 0.45;
+  animation: fold-shimmer 2.8s ease-in-out infinite;
+}
+
+.brain-fold2 { animation-delay: 320ms; }
+.brain-fold3 { animation-delay: 640ms; }
+.brain-fold4 { animation-delay: 960ms; }
+.brain-fold5 { animation-delay: 1.28s; }
+.brain-fold6 { animation-delay: 1.6s; }
+.brain-fold7 { animation-delay: 1.92s; }
+
+@keyframes fold-shimmer {
+  0%, 100% { opacity: 0.2; }
+  50%      { opacity: 1; }
+}
+
+/* dash gap far longer than the path, so exactly one charge is in flight */
+.brain-spark {
+  stroke-dasharray: 18 120;
+  animation: spark-travel 2.2s ease-in-out infinite;
+}
+
+.brain-spark2 { animation-delay: 440ms; }
+.brain-spark3 { animation-delay: 880ms; }
+.brain-spark4 { animation-delay: 1.32s; }
+.brain-spark5 { animation-delay: 1.76s; }
+
+@keyframes spark-travel {
+  from { stroke-dashoffset: 138; }
+  to   { stroke-dashoffset: 0; }
+}
+
 /* keyboard: keys "type" themselves in a ripple */
 .kb-key {
   animation: key-press 4s ease-in-out infinite;
@@ -2702,9 +2725,14 @@ html.is-sectioned .nav {
 /* ================================================================
    perf-low — measured slow hardware
    ----------------------------------------------------------------
-   Set by the capability probe in loader.js: the intro is two seconds of
-   continuous canvas animation, so its median frame time is a fair read on
-   whether this machine can hold 60fps.
+   DORMANT. This was set by the capability probe in the intro loader, which
+   used its own two seconds of canvas animation as a benchmark and read the
+   median frame time off it. The loader was retired (see archive/), and
+   nothing sets perf-low any more, so none of these rules currently apply.
+
+   They are kept because they are still correct and still worth having if the
+   probe is ever rehomed onto another continuously-animating element — see
+   archive/README.md.
 
    The rule for everything in this block: the choreography does not change.
    No duration, easing, delay or stagger is touched, and nothing starts or
