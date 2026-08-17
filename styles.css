@@ -136,6 +136,35 @@ html, body {
   transition: opacity 900ms ease 50ms;
 }
 
+/* ---- first paint ------------------------------------------------
+   The loader is gone but the page still shouldn't snap into place: the
+   chrome starts a few pixels off and clear, and main.js drops .is-booting
+   once the words are laid out, which hands the reveal straight to the
+   transitions above. Nothing here costs a frame — opacity and transform
+   only, both compositor properties, no blur or filter — so it is a fade,
+   not a load screen, and there is no wait in front of it.
+
+   .is-booting lives on <html> in the markup rather than being set by a
+   script, because anything a script adds lands after first paint and the
+   flash it is meant to hide has already happened by then. */
+html.is-booting .nav,
+html.is-booting .track,
+html.is-booting .footer,
+html.is-booting .scroll-hint {
+  opacity: 0;
+}
+
+/* The offsets read as one gesture: the story rises, the chrome closes in on
+   it from the top and bottom edges. The globe is not in this list — it runs
+   its own entrance in sphere.js and always did. */
+html.is-booting .track   { transform: translateY(14px); }
+html.is-booting .nav     { transform: translateY(-10px); }
+html.is-booting .footer  { transform: translateY(10px); }
+
+/* hint-bob is an infinite transform on a fixed element; no reason to have it
+   ticking under an invisible cue. */
+html.is-booting .scroll-hint { animation: none; }
+
 /* ---- chrome ---------------------------------------------------- */
 
 .nav {
@@ -2738,6 +2767,14 @@ html.is-sectioned .nav {
   }
 
   .sphere-item.is-focused svg { transform: none; }
+
+  /* the entrance keeps its fade — that one is safe, and without it the page
+     appears mid-layout — but nothing slides in */
+  html.is-booting .track,
+  html.is-booting .nav,
+  html.is-booting .footer {
+    transform: none;
+  }
 
   /* the globe holds still (JS drops its drift to 0); drag still works */
   .sphere { transition-duration: 1ms; }

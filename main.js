@@ -264,6 +264,21 @@ PARAGRAPHS.forEach((paragraph, pIndex) => {
   });
 });
 
+/* ---- hand over the entrance ----
+   The document ships with .is-booting on <html> so the chrome is clear and
+   slightly offset at first paint (styles.css). The paragraph above is the
+   only thing worth waiting for — dropping the class any earlier reveals a
+   viewport that is about to have 163 words dropped into it.
+
+   Two frames rather than one: the first lets the paragraph lay out, the
+   second makes the class removal a change the compositor can animate
+   instead of folding it into the same frame that built the text. */
+requestAnimationFrame(() => {
+  requestAnimationFrame(() => {
+    document.documentElement.classList.remove("is-booting");
+  });
+});
+
 const totalWords = activatable.length;
 const maxScroll = (totalWords + TAIL_WORDS) * SCROLL_PER_WORD;
 

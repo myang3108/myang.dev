@@ -1,5 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<!-- is-booting: holds the chrome clear until the story is laid out, then
+     main.js drops it and the page fades up. Set here rather than by a script
+     so it is in effect for the very first paint. -->
+<html lang="en" class="is-booting">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -560,6 +563,13 @@
       if (saved === 'dark' || (!saved && prefersDark)) {
         document.documentElement.setAttribute('data-theme', 'dark');
       }
+      /* Failsafe for the entrance: main.js clears .is-booting as soon as the
+         words are in, and this only ever fires if that script didn't run at
+         all. Without it a script error would leave the page permanently
+         blank instead of merely unanimated. */
+      setTimeout(function () {
+        document.documentElement.classList.remove('is-booting');
+      }, 1500);
     })();
   </script>
   <!-- Portrait only. The story is one paragraph sized to fill one screen,
