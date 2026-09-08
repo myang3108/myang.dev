@@ -12,14 +12,31 @@
 (function () {
   const POSTS = [
     {
-      title: 'check back later :p',
+      title: 'a reflection on some moments far and in between',
       date: 'Jul 2026',
       read: '2 min read',
       tags: ['nontech'],
       excerpt:
-        '',
+        'oh dear... nostalgia... ',
       body: `
-        <p></p>
+        <p>not one meal is eaten at the dinner table in my grandparents’ home.</p>
+
+        <p>rather, thousands of handwritten notes stack high on the table. to her, writing down every moment represents a subtle refusal to let a case of worsening dementia overcome her determination to preserve situational awareness. these pages dot the walls, hang on her flowers, and scatter throughout the rooms, each capturing a small piece of a mundane yet fulfilling life. together, they form a capsule of her and my grandfather’s years filled with a quiet yet strong love, and proudness of the children they’ve raised.</p>
+
+        <p>nostalgia is a scary thing. one moment i’m piecing together scrappy tidbits with my shitty chinese reading abilities, and suddenly im six years old again sitting on the wooden couch complaining that the seat is too hard and the air conditioning is too weak. suddenly im eight years old again standing on my tippy toes trying to appear taller as my grandpa measures me against the kitchen wall. suddenly i’m impatiently rocking on the balcony ledge as my grandfather cuts our watermelon into fine cubes with his beloved wooden army knife.</p>
+
+        <p>it’s a strange feeling. the nearly new children’s slippers that 姥姥 prepared for me nearly fifteen years ago are still neatly lined against the wall, coated in a thick layer of dust yet ready to be worn. my memories are fuzzy and far between.</p>
+
+        <p>whether i’ll have the opportunity to revisit these memories in person again remains to be known, yet i desperately want to savor every detail of the ones that buzz in and out of my head before they get lost, replaced with new moments i carve out with my friends or the endless amount of knowledge needed for me to survive this job.</p>
+
+        <p>maybe i should’ve written them down.</p>
+
+        <figure class="blog-photo-strip" aria-label="Photographs from my grandparents’ home">
+          <img src="photos/post-dscf0030.jpg" alt="My grandmother writing at a table surrounded by handwritten notes" loading="lazy" decoding="async">
+          <img src="photos/post-dscf0078.jpg" alt="Pens and glasses resting among stacks of handwritten notes" loading="lazy" decoding="async">
+          <img src="photos/post-dscf0053.jpg" alt="Handwritten notes tied to the branches of houseplants" loading="lazy" decoding="async">
+          <img src="photos/post-dscf0058.jpg" alt="My grandmother standing among plants and notes in the sunroom" loading="lazy" decoding="async">
+        </figure>
       `,
     },
   ];
@@ -46,8 +63,9 @@
     { src: 'photos/img_5348_720.jpg' },
     { src: 'photos/img_5436_720.jpg' },
     { src: 'photos/img_5508_720.jpg' },
-    { src: 'photos/img_5801_720.jpg' },
-    { src: 'photos/img_5876_720.jpg' },
+    { src: 'photos/img_1897_720.jpg' },
+    { src: 'photos/img_2965_720.jpg', position: '35% center' },
+    { src: 'photos/img_0467_720.jpg' },
     { src: 'photos/img_5937_720.jpg' },
     { src: 'photos/img_6152_720.jpg' },
     { src: 'photos/img_6216_720.jpg' },
@@ -592,6 +610,7 @@
         figure.className = 'carousel-figure';
         const img = document.createElement('img');
         img.src = photo.src;
+        if (photo.position) img.style.objectPosition = photo.position;
         img.alt = photo.text || '';
         img.draggable = false;
         img.decoding = 'async';

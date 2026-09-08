@@ -2551,19 +2551,6 @@ html.is-sectioned .nav {
   background: rgba(35, 35, 35, 0.22);
 }
 
-/* Drop cap on the opening paragraph — the one flourish that says "journal"
-   more than any amount of styling elsewhere. Anchored to the paragraph
-   after the date line rather than :first-of-type, since the date itself is
-   the first <p> in the body. */
-.blog-article-meta + p::first-letter {
-  float: left;
-  font-size: 47px;
-  font-weight: 500;
-  line-height: 0.84;
-  margin: 5px 9px 0 0;
-}
-
-
 .blog-article h2 {
   font-size: 17px;
   font-weight: 600;
@@ -2576,6 +2563,44 @@ html.is-sectioned .nav {
   line-height: 1.75;
   margin: 0 0 18px;
   color: var(--ink);
+  text-wrap: pretty;
+}
+
+.blog-photo-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  width: 100%;
+  margin: 34px 0 0;
+}
+
+.blog-photo-strip img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border-radius: 2px;
+}
+
+@media (max-width: 720px) {
+  .blog-photo-strip {
+    display: flex;
+    gap: 6px;
+    position: relative;
+    left: 50%;
+    width: calc(100vw - 40px);
+    overflow-x: auto;
+    padding-bottom: 8px;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: thin;
+    transform: translateX(-50%);
+  }
+
+  .blog-photo-strip img {
+    flex: 0 0 140px;
+    width: 140px;
+    scroll-snap-align: start;
+  }
 }
 
 .blog-article ul {
@@ -2781,6 +2806,7 @@ html.is-sectioned .nav {
 }
 
 .carousel-item img {
+  position: relative;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -3460,7 +3486,6 @@ html.perf-low .prose {
   .resume-entry-head span,
   .resume-entry-sub span { white-space: normal; }
 
-  .blog-article-meta + p::first-letter { font-size: 34px; }
 }
 
 /* ---- the narrower phones ---------------------------------------
@@ -3548,10 +3573,7 @@ html, body {
 /* ---- project detail: the journal flourishes don't belong here ----
    #projectDetail reuses .blog-article so it inherits the slide-in, the
    native scrolling and the back control. What it should not inherit is the
-   typography that makes a rambling look like a journal entry: the centred
-   title and date with a rule under them, and the drop cap anchored to the
-   paragraph after .blog-article-meta — which here is the project
-   description, so every project opened with one enormous letter. */
+   centred title and date with a rule under them. */
 #projectDetail h1 {
   text-align: left;
   font-size: 28px;
@@ -3564,14 +3586,6 @@ html, body {
 }
 
 #projectDetail .blog-article-meta::after { content: none; }
-
-#projectDetail .blog-article-meta + p::first-letter {
-  float: none;
-  font-size: inherit;
-  font-weight: inherit;
-  line-height: inherit;
-  margin: 0;
-}
 
 #projectDetail .blog-tags {
   margin-top: 22px;
