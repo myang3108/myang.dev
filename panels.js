@@ -21,7 +21,7 @@
       body: `
         <p>not one meal is eaten at the dinner table in my grandparents’ home.</p>
 
-        <p>rather, thousands of handwritten notes stack high on the table. to her, writing down every moment represents a subtle refusal to let a case of worsening dementia overcome her determination to preserve situational awareness. these pages dot the walls, hang on her flowers, and scatter throughout the rooms, each capturing a small piece of a mundane yet fulfilling life. together, they form a capsule of her and my grandfather’s years filled with a quiet yet strong love, and proudness of the children they’ve raised.</p>
+        <p>rather, thousands of handwritten notes stack high on the table. to her, writing down every moment represents a subtle refusal to let a case of worsening dementia overcome her determination to preserve situational awareness. these pages dot the walls, hang on her flowers, and scatter throughout the rooms, each capturing a small piece of a mundane yet fulfilling life. Together, they form a fond capsule of her and my grandfather’s years, filled with pride in the children they raised and the silent ache of having them now live halfway across the world. </p>
 
         <p>nostalgia is a scary thing. one moment i’m piecing together scrappy tidbits with my shitty chinese reading abilities, and suddenly im six years old again sitting on the wooden couch complaining that the seat is too hard and the air conditioning is too weak. suddenly im eight years old again standing on my tippy toes trying to appear taller as my grandpa measures me against the kitchen wall. suddenly i’m impatiently rocking on the balcony ledge as my grandfather cuts our watermelon into fine cubes with his beloved wooden army knife.</p>
 
