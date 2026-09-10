@@ -638,8 +638,9 @@ html.is-revealing .scroll-hint {
   display: flex;
   align-items: center;
   white-space: nowrap;
-  font-weight: 600;
-  color: var(--ink-dim);
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
   opacity: 0;
   transform: translateY(100%);
   transition: opacity 400ms cubic-bezier(0.16, 1, 0.3, 1),
@@ -656,15 +657,16 @@ html.is-revealing .scroll-hint {
   transform: translateY(-100%);
 }
 
-/* animated shimmer sweeping across green text once scrolled into view */
+/* A low-contrast, theme-aware shimmer keeps the rotating words close to the
+   surrounding text while giving them a little movement. */
 .roller.is-active .roller-word {
   background: linear-gradient(
     100deg,
-    #4caf50 0%,
-    #1b5e2f 25%,
-    #6dd36f 50%,
-    #1b5e2f 75%,
-    #4caf50 100%
+    var(--ink) 0%,
+    color-mix(in oklab, var(--ink) 72%, var(--bg)) 25%,
+    color-mix(in oklab, var(--ink) 98%, var(--bg)) 50%,
+    color-mix(in oklab, var(--ink) 72%, var(--bg)) 75%,
+    var(--ink) 100%
   );
   background-size: 250% 100%;
   -webkit-background-clip: text;
@@ -673,13 +675,6 @@ html.is-revealing .scroll-hint {
   color: transparent;
 }
 
-/* The gradient above stays on every word so one can't flash to solid ink
-   part-way through rotating out. Only the animation is scoped, and only to
-   the two words that can actually be seen: the one on screen and the one
-   travelling off it. Animating background-position on a 250%-wide gradient
-   clipped to glyphs regenerates the gradient and re-rasterizes the text
-   mask every frame, and three of the five spans are fully transparent at
-   any moment — that work was invisible by definition. */
 .roller.is-active .roller-word.is-visible,
 .roller.is-active .roller-word.is-out {
   animation: roller-shimmer 3.85s linear infinite;
@@ -688,21 +683,6 @@ html.is-revealing .scroll-hint {
 @keyframes roller-shimmer {
   0%   { background-position: 0% 0; }
   100% { background-position: -250% 0; }
-}
-
-[data-theme="dark"] .roller.is-active .roller-word {
-  background: linear-gradient(
-    100deg,
-    #66d16b 0%,
-    #2e8b45 25%,
-    #8ce88f 50%,
-    #2e8b45 75%,
-    #66d16b 100%
-  );
-  background-size: 250% 100%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 /* -- wave: a hand that waves when activated -- */
@@ -813,7 +793,7 @@ html.is-revealing .scroll-hint {
   100% { transform: rotate(0deg); }
 }
 
-/* -- fahnestock: grey gradient -- */
+/* -- fahnestock: solid green -- */
 .fahnestock-name {
   font-weight: 700;
   letter-spacing: -0.01em;
@@ -821,11 +801,9 @@ html.is-revealing .scroll-hint {
 }
 
 .token-fahnestock.is-active .fahnestock-name {
-  background: linear-gradient(90deg, #4a4a4a, #8a8a8a, #5a5a5a);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  color: transparent;
+  background: none;
+  -webkit-text-fill-color: #5aaf60;
+  color: #5aaf60;
 }
 
 .token-fahnestock:hover .fahnestock-name { filter: brightness(1.3); }
