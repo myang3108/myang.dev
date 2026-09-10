@@ -25,9 +25,9 @@
 
         <p>nostalgia is a scary thing. one moment i’m piecing together scrappy tidbits with my shitty chinese reading abilities, and suddenly im six years old again sitting on the wooden couch complaining that the seat is too hard and the air conditioning is too weak. suddenly im eight years old again standing on my tippy toes trying to appear taller as my grandpa measures me against the kitchen wall. suddenly i’m impatiently rocking on the balcony ledge as my grandfather cuts our watermelon into fine cubes with his beloved wooden army knife.</p>
 
-        <p>it’s a strange feeling. the nearly new children’s slippers that 姥姥 prepared for me nearly fifteen years ago are still neatly lined against the wall, coated in a thick layer of dust yet ready to be worn. my memories are fuzzy and far between.</p>
+        <p>it’s a strange feeling. The nearly new children’s slippers that 姥姥 prepared for me almost fifteen years ago are still lined neatly against the wall, coated in thick dust yet waiting to be worn. They belong to a version of me I remember only in fragments. Because my visits have always been years apart, each one seems to leave a forgotten trace behind: a pair of slippers, a photograph, a small habit of the house preserved almost exactly as it was until I return.</p>
 
-        <p>whether i’ll have the opportunity to revisit these memories in person again remains to be known, yet i desperately want to savor every detail of the ones that buzz in and out of my head before they get lost, replaced with new moments i carve out with my friends or the endless amount of knowledge needed for me to survive this job.</p>
+        <p>whether i’ll have the opportunity to revisit these memories in person again remains to be known, yet i desperately want to savor every detail of the ones that buzz in and out of my head before they get lost, replaced with new moments i carve out with my friends or the endless amount of knowledge i try to intake to find success at work.</p>
 
         <p>maybe i should’ve written them down.</p>
 
