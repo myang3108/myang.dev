@@ -17,10 +17,11 @@
 const PARAGRAPHS = [
   "hello hello! <wave> i'm michael, an ece student at uiuc ( *go* *illini!* )",
   "\nmy passions lie within <roller> with the occasional detour towards building whatever cool idea catches my curiosity.",
+  "i'm currently wearing multiple hats as a Member of Technical Staff at <kanu>",
   "the past two summers, i've worked on the Sandstone ML team at <amazon> building infrastructure for foundational behavioral model training and a knowledge-graph powered recommendation engine to predict customer shopping activity.",
   "i got my start interning at various startups, building C# and devops tooling for cancer-detection scanners at <mh3d> then full-stack edtech products at <geni>",
   "along the way i co-founded <vault> a time-capsule app for preserving memories. it started as a way to capture summers with my friends and grew to over 1,000 users!",
-  "currently, i'm part of the <crane> <fahnestock> at uiuc, using ai agents to modernize structural engineering design principles.",
+  "i was also part of the <crane> <fahnestock> at uiuc, where i leveraged ai agents to modernize structural engineering design principles.",
   "thanks for stopping by, and feel free to take a look at my work :)",
   "want to connect? <cta>",
 ];
@@ -99,6 +100,22 @@ const TOKEN_BUILDERS = {
     const el = document.createElement("span");
     el.className = "token token-wave";
     el.textContent = "\u{1F44B}";
+    return el;
+  },
+  "<kanu>": () => {
+    const el = document.createElement("a");
+    el.className = "word-link token-kanu";
+    el.href = "https://www.getkanu.com/";
+    el.target = "_blank";
+    el.rel = "noopener noreferrer";
+    el.innerHTML = '<span class="token token-kanu-mark" aria-hidden="true"><svg viewBox="0 0 26 28">'
+      + '<g class="kanu-tree">'
+      + '<g class="kanu-crown-idle"><path class="kanu-crown" d="M12.603 0c3.74 0 6.772 3.016 6.772 6.737 0 2.288-1.165 4.419-3.091 5.655-1.418.915-2.74 2.269-2.74 3.95v10.42a.94.94 0 0 1-1.881-.001v-10.42c0-1.68-1.323-3.034-2.741-3.949-1.925-1.236-3.09-3.367-3.09-5.655C5.831 3.017 8.862 0 12.601 0Z" fill="currentColor"/></g>'
+      + '<g class="kanu-leaf-idle kanu-leaf-idle-right"><path class="kanu-leaf kanu-leaf-right" d="M20.127 12.726c2.805 0 5.079 2.262 5.079 5.052s-2.274 5.053-5.079 5.053c-.311 0-.621-.028-.927-.084-1.054-.193-1.581-.29-1.772-.222-.216.077-.282.131-.397.329-.102.174-.102.57-.102 1.364v2.543a.94.94 0 0 1-1.88 0v-8.85a5.05 5.05 0 0 1 5.078-5.185Z" fill="currentColor"/></g>'
+      + '<g class="kanu-leaf-idle kanu-leaf-idle-left"><path class="kanu-leaf kanu-leaf-left" d="M5.079 15.533C2.274 15.533 0 17.795 0 20.586c0 2.79 2.274 5.052 5.079 5.052.4 0 .798-.046 1.187-.139.818-.195 1.227-.292 1.374-.27.329.052.454.15.58.456.057.137.057.45.057 1.076a.94.94 0 0 0 1.88 0v-5.26l-.011-.543v-.03l-.004.052c.01-.13.016-.262.016-.395 0-2.79-2.274-5.052-5.079-5.052Z" fill="currentColor"/></g>'
+      + '</g>'
+      + '<g class="kanu-glints" fill="currentColor"><circle cx="3" cy="9" r="0.7"/><circle cx="22.5" cy="7" r="0.55"/><circle cx="22" cy="2.5" r="0.45"/></g>'
+      + '</svg></span> <span class="kanu-name">Kanu.</span>';
     return el;
   },
   "<spark>": () => {
