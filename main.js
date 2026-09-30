@@ -21,7 +21,7 @@ const PARAGRAPHS = [
   "the past two summers, i've worked on the Sandstone ML team at <amazon> building infrastructure for foundational behavioral model training and a knowledge-graph powered recommendation engine to predict customer shopping activity.",
   "i got my start interning at various startups, building C# and devops tooling for cancer-detection scanners at <mh3d> then full-stack edtech products at <geni>",
   "along the way i co-founded <vault> a time-capsule app for preserving memories. it started as a way to capture summers with my friends and grew to over 1,000 users!",
-  "i was also part of the <crane> <fahnestock> at uiuc, where i leveraged ai agents to modernize structural engineering design principles.",
+  "i was formerly part of the <crane> <fahnestock> at uiuc, where i leveraged ai agents to modernize structural engineering design principles.",
   "thanks for stopping by, and feel free to take a look at my work :)",
   "want to connect? <cta>",
 ];
@@ -115,7 +115,7 @@ const TOKEN_BUILDERS = {
       + '<g class="kanu-leaf-idle kanu-leaf-idle-left"><path class="kanu-leaf kanu-leaf-left" d="M5.079 15.533C2.274 15.533 0 17.795 0 20.586c0 2.79 2.274 5.052 5.079 5.052.4 0 .798-.046 1.187-.139.818-.195 1.227-.292 1.374-.27.329.052.454.15.58.456.057.137.057.45.057 1.076a.94.94 0 0 0 1.88 0v-5.26l-.011-.543v-.03l-.004.052c.01-.13.016-.262.016-.395 0-2.79-2.274-5.052-5.079-5.052Z" fill="currentColor"/></g>'
       + '</g>'
       + '<g class="kanu-glints" fill="currentColor"><circle cx="3" cy="9" r="0.7"/><circle cx="22.5" cy="7" r="0.55"/><circle cx="22" cy="2.5" r="0.45"/></g>'
-      + '</svg></span> <span class="kanu-name">Kanu.</span>';
+      + '</svg></span> <span class="kanu-name">Kanu!</span>';
     return el;
   },
   "<spark>": () => {
